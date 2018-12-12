@@ -17,8 +17,9 @@ $tsts = [
 	[30, 5807],
 ];
 $tsts[] = $in[0];
-$tsts = [];
-$tsts[] = [419, 721640];
+$tsts[] = [419, 7216400];
+
+gc_disable();
 
 class node {
 	public $v;
@@ -47,7 +48,10 @@ class node {
 	public function remove() {
 		$this->nextNode->prevNode = $this->prevNode;
 		$this->prevNode->nextNode = $this->nextNode;
-		return $this->nextNode;
+		$tmp = $this->nextNode;
+
+		$this->prevNode = $this->nextNode = null;
+		return $tmp;
 	}
 
 	public function circle() {
