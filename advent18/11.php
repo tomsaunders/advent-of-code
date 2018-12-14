@@ -56,11 +56,17 @@ class grid {
 				$blockP = 0;
 				for ($s = 1; $s < $maxS; $s++){
 					$block = "$x,$y,$s";
-					for ($b = $y; $b < $y + $s; $b++){
-						for ($a = $x; $a < $x + $s; $a++){
-							$cell = $this->getCell($a, $b);
-							$blockP += $cell->power;
-						}
+					// do x across the entire amount, y constant
+					// then y across all but one, x constant
+					$b = $y + $s - 1;
+					for ($a = $x; $a < $x + $s; $a++){
+						$cell = $this->getCell($a, $b);
+						$blockP += $cell->power;
+					}
+					$a = $x + $s - 1;
+					for ($b = $y; $b < $y + $s - 1; $b++){
+						$cell = $this->getCell($a, $b);
+						$blockP += $cell->power;
 					}
 					if ($blockP > $max){
 						$max = $blockP;
@@ -122,8 +128,8 @@ $g = new grid($in, 300);
 $g->calc();
 
 echo "\nPart 2\n";
-$g1->calcX();
-$g2->calcX();
+// $g1->calcX();
+// $g2->calcX();
 $g->calcX();
 
 echo "\n";
