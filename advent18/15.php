@@ -165,7 +165,7 @@ class area {
 				// for every in range square, work out which are reachable
 				$reachable = [];
 				foreach ($inRange as $cell) {
-					$paths = $this->djk($start, $cell);
+					$paths = $this->astar($start, $cell);
 					if ($paths) {
 						$reachable = array_merge($reachable, $paths);
 					}
@@ -270,9 +270,9 @@ class area {
 				$min     = $score;
 				$minCell = $cell;
 			} else if ($score == $min && $minCell){
-					if ($this->costEstimate($cell, $goal) < $this->costEstimate($minCell, $goal)){
-						$minCell = $cell;
-					}
+				if ($this->costEstimate($cell, $goal) < $this->costEstimate($minCell, $goal)){
+					$minCell = $cell;
+				}
 			}
 		}
 		return $minCell;
@@ -719,10 +719,10 @@ $g = new area(explode("\n", $combat6));
 //$g->play(FALSE);
 
 $g = new area(explode("\n", $in));
-$g->p();
-$g->turn();
-$g->p();
-//$g->play(TRUE); // TOO LOW 234855 ALSO 238478
+// $g->p();
+// $g->turn();
+// $g->p();
+$g->play(TRUE); // TOO LOW 234855 ALSO 238478
 
 // WRONGOOO
 //Game over! after 77 the score is 211365
