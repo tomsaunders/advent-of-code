@@ -73,24 +73,27 @@ class area {
 		return new cell($y, $x, WALL, $this);
 	}
 
-	public function p() {
+	public function p($showTurns = TRUE) {
 		$g = [];
 		foreach ($this->grid as $y => $row) {
 			$r = '';
 			foreach ($row as $x => $cell) {
 				$r .= $cell->icon;
 			}
-			$g[] = $r;
+			$g[] = $r . '   ';
 
 		}
 
 		$units = $this->getUnits();
 		foreach ($units as $unit) {
-			$g[$unit->cell->y] .= $unit;
+			$g[$unit->cell->y] .= ' ' . $unit;
 		}
 		$g[] = '';
-		$g[] = '';
-		echo "After {$this->completedTurns} rounds:\n";
+		// $g[] = '';
+		// if ($showTurns) echo "After {$this->completedTurns} rounds:\n";
+		$t = $this->completedTurns + 1;
+		if ($showTurns) echo "# round: {$t}\n";
+		else $g[] = '';
 		echo implode("\n", $g);
 	}
 
@@ -124,7 +127,11 @@ class area {
 		echo "\nGame over! after {$this->completedTurns} the score is {$this->outcome()}\n";
 	}
 
-	public function turn() {
+	public function turn($print = FALSE) {
+		if ($print){
+			$this->p();
+		}
+
 		$units = $this->getUnits();
 
 		foreach ($units as $unit) {
@@ -161,11 +168,12 @@ class area {
 			if (count($canTargets) > 0) {
 				$willTarget = reset($canTargets);
 				$unit->attack($willTarget);
+				echo "$unit: attack $willTarget\n";
 			} else {
 				// for every in range square, work out which are reachable
 				$reachable = [];
 				foreach ($inRange as $cell) {
-					$paths = $this->astar($start, $cell);
+					$paths = $this->djk($start, $cell);
 					if ($paths) {
 						$reachable = array_merge($reachable, $paths);
 					}
@@ -180,14 +188,23 @@ class area {
 					// can't do anything, end turn
 				} else {
 					if (count($reachable) > 1){
-//						echo "Moving $unit, many options:\n";
-//						echo implode("\n", $reachable);
+						// echo "\n\nMoving $unit, many options:\n";
+						// echo implode("\n", $reachable);
 					}
 					// of the closest, find the first in reading order to choose
 					$bestPath = reset($reachable);
-//					echo "Choosing $bestPath\n";
+					echo "finding path $bestPath\n";
+					$i = 0;
+					while ($reachable[++$i]->dist() === $bestPath->dist()){
+						echo "$i next best {$reachable[$i]}\n";
+					}
 					$move     = $bestPath->first();
-//					echo "Moving to $move\n";
+					echo "$unit: moving to $move\n";
+					if ($unit->cell->y === 3 && $unit->cell->x === 20){
+						//me 20,4
+						//nick 21,3
+						exit;
+					}
 					$unit->moveTo($move);
 
 					$willTarget = NULL;
@@ -204,9 +221,15 @@ class area {
 					if (count($canTargets) > 0) {
 						$willTarget = reset($canTargets);
 						$unit->attack($willTarget);
+						echo "$unit: attack $willTarget\n";
+					} else {
+						echo "$unit: nothing to attack!\n";
 					}
 				}
 			}
+		}
+		if ($print){
+			$this->p(FALSE);
 		}
 		$this->completedTurns++;
 		return TRUE;
@@ -279,7 +302,8 @@ class area {
 	}
 
 	public function astar($start, $goal) {
-//		echo "astar $start to $goal\n";
+		// echo "astar $start to $goal\n";
+		$e = $goal->y === 13 && $goal->x === 21;
 		$closedSet = new set();
 		$openSet   = new set();
 		$openSet->add($start);
@@ -292,6 +316,8 @@ class area {
 		$paths = [];
 		while ($openSet->count()) {
 			$current = $this->lowestScore($openSet, $fScore);
+			// $e = $e && $current == $start;
+			// if ($e) echo "astar $current ===================\n";
 
 			$openSet->remove($current);
 			$closedSet->add($current);
@@ -301,6 +327,9 @@ class area {
 				$paths[] = $path;
 			} else {
 				foreach ($current->neighbours() as $neighbour) {
+					// if ($e){
+					// 	echo "astar from $start thinking about $neighbour\n";
+					// }
 					if ($closedSet->has($neighbour)) {
 						continue; // already evaluated
 					}
@@ -333,6 +362,11 @@ class area {
 			if ($score < $min) {
 				$min     = $score;
 				$minCell = $cell;
+			} else if ($score == $min && $minCell){ 
+				echo "Equal $score $minCell and $cell\n";
+				if ($cell->sort($minCell) < 0){
+					$minCell = $cell;
+				}
 			}
 		}
 		return $minCell;
@@ -459,6 +493,9 @@ class path {
 	}
 
 	public function __toString() {
+		$zero = reset($this->arr);
+		$end = $this->end();
+		// return "$zero $end";
 		return implode(" -> ", $this->arr) . ' = ' . $this->dist();
 	}
 
@@ -510,7 +547,7 @@ class cell {
 	}
 
 	public function __toString() {
-		return "{$this->x},{$this->y}";
+		return "({$this->x}, {$this->y})";
 	}
 
 	public function dist($y, $x = NULL) {
@@ -581,7 +618,8 @@ class unit {
 	}
 
 	public function __toString() {
-		return " {$this->icon}({$this->hp})";// @ {$this->cell->x},{$this->cell->y}";
+		// return "{$this->icon}[{$this->hp}]";// @ {$this->cell->x},{$this->cell->y}";
+		return "{$this->icon}[{$this->cell->x},{$this->cell->y}]";// @ {$this->cell->x},{$this->cell->y}";
 	}
 
 	public function moveTo($cell) {
@@ -720,9 +758,11 @@ $g = new area(explode("\n", $combat6));
 
 $g = new area(explode("\n", $in));
 // $g->p();
-// $g->turn();
+$g->turn(TRUE);
 // $g->p();
-$g->play(TRUE); // TOO LOW 234855 ALSO 238478
+// $g->turn(TRUE);
+// $g->p();w
+// $g->play(TRUE); // TOO LOW 234855 ALSO 238478
 
 // WRONGOOO
 //Game over! after 77 the score is 211365
@@ -765,3 +805,11 @@ $g = new area(explode("\n", $in));
 $in     = file_get_contents('input15d.txt');
 $g = new area(explode("\n", $in));
 //$g->play(TRUE);
+
+// $cells = [new cell(4, 20, null, null), new cell(3,21, null, null)];
+// echo "Cells " . implode(", ", $cells) . "\n";
+// echo "srot\n";
+// usort($cells, function ($a, $b) {
+// 	return $a->sort($b);
+// });
+// echo "Cells " . implode(", ", $cells) . "\n";
