@@ -29,6 +29,12 @@ class Grid {
   public minX: number = 9;
   public maxY: number = 0;
   public maxX: number = 0;
+  public get yRange(): number {
+    return this.maxY - this.minY;
+  }
+  public get xRange(): number {
+    return this.maxX - this.minX;
+  }
 
   public constructor() {
     this.cells = new Map<string, Cell>();
@@ -37,8 +43,9 @@ class Grid {
   public getCell(x: number, y: number) {
     const k = key(x, y);
     if (!this.cells.has(k)) {
-      this.cells.set(k, new Cell(x, y, this));
-      console.log("making cell at ", k);
+      const cell = new Cell(x, y, this);
+      this.cells.set(cell.key, cell);
+      // console.log("making cell at ", k);
       this.maxX = Math.max(this.maxX, x);
       this.maxY = Math.max(this.maxY, y);
       this.minX = Math.min(this.minX, x);
@@ -46,9 +53,26 @@ class Grid {
     }
     return this.cells.get(k) as Cell;
   }
+
+  public finish(): void {
+    let max = 0;
+    let thouCount = 0;
+    this.cells.forEach((cell) => {
+      if (cell.i === UNK) cell.icon(WALL);
+      if (cell.i === ROOM) {
+        max = Math.max(cell.dist, max);
+        if (cell.dist >= 1000) thouCount++;
+      }
+    });
+    console.log("Maximum distance is", max);
+    console.log("Exceed 1000:", thouCount); //8580 too low
+  }
 }
 
 class Cell {
+  public get key(): string {
+    return key(this.x, this.y);
+  }
   private _up: Cell | undefined;
   public get up(): Cell {
     if (!this._up) {
@@ -99,7 +123,7 @@ class Cell {
 
   private _right: Cell | undefined;
   public get right(): Cell {
-    console.log("cell right");
+    // console.log("cell right");
     if (!this._right) {
       const right = this.map.getCell(this.x + 1, this.y);
       right.left = this;
@@ -114,7 +138,12 @@ class Cell {
     return !!this._right;
   }
 
-  public i: string = "";
+  public get isDoor(): boolean {
+    return this.i === DOOR || this.i === DOOR2;
+  }
+
+  public i: string = UNK;
+  public dist: number = 99999;
 
   public constructor(public x: number, public y: number, public map: Grid) {}
 
@@ -123,60 +152,155 @@ class Cell {
     return this;
   }
 
-  public follow(regex: string): void {
-    console.log("following ", regex);
+  public wall(): this {
+    return this.icon(WALL);
+  }
+
+  public room(oldDist: number): this {
+    this.map.getCell(this.x - 1, this.y - 1).wall();
+    this.map.getCell(this.x + 1, this.y - 1).wall();
+    this.map.getCell(this.x - 1, this.y + 1).wall();
+    this.map.getCell(this.x + 1, this.y + 1).wall();
+    this.left;
+    this.right;
+    this.up;
+    this.down;
+    this.dist = Math.min(this.dist, oldDist + 1);
+
+    return this.icon(ROOM);
+  }
+
+  public follow(regex: string[], context: Cell[] = []): void {
+    // console.log("following ", regex);
     let current = this as Cell;
-    for (let i = 0; i < regex.length; i++) {
-      const c = regex[i];
-      console.log(c);
+    while (regex.length) {
+      // console.log("\n", regex.join(""), "context ", context.map((cell) => cell.key).join(", "));
+      print(this.map);
+      let c = regex.shift() as string;
       if (c.match(/[NSEW]/)) {
-        console.log("match ", c);
         current = current.move(c);
+        // console.log("match ", c, " now ", current.key);
+      } else if (c === "(") {
+        context = [...context, current];
+        // console.log("new branch from ", current.key);
+      } else if (c === "|") {
+        const last = context.pop() as Cell;
+        // console.log("switch - back to ", last.key);
+        last.follow([...regex], [...context, last]);
+        // skip ahead until we're at the correct depth for this path
+        // console.log("skipping ahead from ", regex.length);
+        let depth = 1;
+        while (depth) {
+          let d = regex.shift() as string;
+          if (d === "(") depth++;
+          if (d === ")") depth--;
+        }
+        // console.log("to ", regex.length);
+      } else if (c === ")") {
+        // console.log("pop)");
+        context.pop();
+      }
+    }
+  }
+
+  public cheat(regex: string[]): void {
+    let current = this as Cell;
+    let stack: Cell[] = [current];
+    for (const c of regex) {
+      print(this.map);
+      if (c.match(/[NSEW]/)) {
+        current = current.move(c);
+      } else if (c === "(") {
+        stack.push(current);
+      } else if (c === ")") {
+        current = stack.pop() as Cell;
+      } else if (c === "|") {
+        current = stack[stack.length - 1];
       }
     }
   }
 
   public move(dir: string): Cell {
-    this.i = ROOM;
     switch (dir) {
       case "N":
-        return this.up.icon(DOOR2).up.icon(POS);
+        return this.upDoor();
       case "E":
-        console.log("move e");
-        return this.right.icon(DOOR).right.icon(POS);
+        // console.log("move e");
+        return this.rightDoor();
       case "S":
-        return this.down.icon(DOOR2).down.icon(POS);
+        return this.downDoor();
       case "W":
-        return this.left.icon(DOOR).left.icon(POS);
+        return this.leftDoor();
     }
     return this; // just to shut up TypeScript
+  }
+
+  public upDoor(): Cell {
+    const door = this.up.icon(DOOR2);
+    door.left.wall();
+    door.right.wall();
+    return door.up.room(this.dist);
+  }
+
+  public downDoor(): Cell {
+    const door = this.down.icon(DOOR2);
+    door.left.wall();
+    door.right.wall();
+    return door.down.room(this.dist);
+  }
+
+  public leftDoor(): Cell {
+    const door = this.left.icon(DOOR);
+    door.up.wall();
+    door.down.wall();
+    return door.left.room(this.dist);
+  }
+
+  public rightDoor(): Cell {
+    const door = this.right.icon(DOOR);
+    door.up.wall();
+    door.down.wall();
+    return door.right.room(this.dist);
   }
 }
 
 function print(map: Grid) {
-  console.log(map.minX, ", ", map.minY, " to ", map.maxX, ", ", map.maxY);
-  // let current = start;
-  // while (current.hasUp) {
-  //   current = current.up;
-  // }
-  // while (current.hasLeft) {
-  //   current = current.left;
-  // }
-  // let out = current.i;
-  // while (current.hasDown) {
-  //   let rowStart = current;
-  //   while (current.hasRight) {
-  //     current = current.right;
-  //     out += current.i;
-  //   }
-  //   out += "\n";
-  //   current = rowStart.down;
-  // }
-  // console.log(out);
+  let out: string[][] = [];
+  for (let y = 0; y <= map.yRange; y++) {
+    let row = [];
+    for (let x = 0; x <= map.xRange; x++) {
+      row.push(" ");
+    }
+    out.push(row);
+  }
+  map.cells.forEach((cell) => {
+    let x = cell.x - map.minX;
+    let y = cell.y - map.minY;
+    out[y][x] = cell.i;
+  });
+  out.unshift([]);
+  out.push([]);
+  console.log(out.map((row) => row.join("")).join("\n"));
 }
 
-const map = new Grid();
-const start = new Cell(0, 0, map).icon(POS);
-print(map);
-start.follow("EEE");
-print(map);
+const tests = [
+  "^WNE$",
+  "ENWWW(NEEE|SSE(EE|N))",
+  "ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN",
+  "^ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$",
+  "^WSSEESWWWNW(S|NENNEEEENN(ESSSSW(NWSW|SSEN)|WSWWN(E|WWS(E|SS))))$",
+  input
+];
+for (let test of tests) {
+  test = test.replace("^", "").replace("$", "");
+  console.log(test.substr(0, 100));
+  const map = new Grid();
+  const start = map
+    .getCell(0, 0)
+    .room(0)
+    .icon(POS);
+  start.dist = 0;
+  start.cheat(test.split(""));
+  map.finish();
+  // print(map);
+}

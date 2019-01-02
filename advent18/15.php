@@ -4,7 +4,7 @@ define('OPEN', '.');
 define('GOBLIN', 'G');
 define('ELF', 'E');
 
-ini_set('memory_limit', '4G');
+ini_set('memory_limit', '6G');
 gc_disable();
 $in = file_get_contents('input15.txt');
 $test = <<<TST
@@ -44,7 +44,7 @@ class area
     public $completedTurns = 0;
     public $cells = [];
 
-    public function __construct($grid)
+    public function __construct($grid, $elfPower = 3)
     {
         $this->grid = [];
         foreach ($grid as $y => $row) {
@@ -58,7 +58,7 @@ class area
                 if ($c === GOBLIN) {
                     $this->goblins[] = new goblin($cell);
                 } elseif ($c === ELF) {
-                    $this->elves[] = new elf($cell);
+                    $this->elves[] = new elf($cell, $elfPower);
                 }
             }
             $this->grid[] = $r;
@@ -97,6 +97,7 @@ class area
         } else {
             $g[] = '';
         }
+        array_unshift($g, '');
         echo implode("\n", $g);
     }
 
@@ -130,7 +131,7 @@ class area
         if ($print) {
             // $this->p();
         }
-        echo "\nGame over! after {$this->completedTurns} the score is {$this->outcome()}\n";
+        echo "Game over! after {$this->completedTurns} the score is {$this->outcome()}\n";
     }
 
     public function turn($print = false)
@@ -184,16 +185,17 @@ class area
                 $willTarget = reset($canTargets);
                 $unit->attack($willTarget);
                 $t = $willTarget->n();
-                echo "$n: attack $t\n";
+                // echo "$n: attack $t\n";
             } else {
                 // for every in range square, work out which are reachable
                 $reachable = [];
-                foreach ($inRange as $cell) {
-                    $paths = $this->astar($start, $cell);
-                    if ($paths) {
-                        $reachable = array_merge($reachable, $paths);
-                    }
-                }
+                // foreach ($inRange as $cell) {
+                //     $paths = $this->astar($start, $cell);
+                //     if ($paths) {
+                //         $reachable = array_merge($reachable, $paths);
+                //     }
+                // }
+                $reachable = $this->flood($start, $inRange);
 
                 // for every reachable cell, find the closest
                 usort($reachable, function ($a, $b) {
@@ -209,18 +211,18 @@ class area
                     }
                     // of the closest, find the first in reading order to choose
                     $bestPath = reset($reachable);
-                    $djks = $this->djk($start, $bestPath->end(), $bestPath->dist());
-                    echo "finding path $bestPath\n";
-                    echo "now got djks \n";
-                    foreach ($djks as $djk) {
-                        echo $djk->p() . "\n";
-                    }
-                    $i = 0;
+                    // $djks = $this->djk($start, $bestPath->end(), $bestPath->dist());
+                    // echo "finding path $bestPath\n";
+                    // echo "now got djks \n";
+                    // foreach ($djks as $djk) {
+                    //     echo $djk->p() . "\n";
+                    // }
+                    // $i = 0;
                     // while ($reachable[++$i]->dist() === $bestPath->dist()) {
                     //     echo "$i next best {$reachable[$i]}\n";
                     // }
                     $move = $bestPath->first();
-                    echo "$n: moving to $move\n";
+                    // echo "$n: moving to $move\n";
                     if ($unit->cell->y === 3 && $unit->cell->x === 20) {
                         // 	//me 20,4
                         // 	//nick 21,3
@@ -244,9 +246,9 @@ class area
                         $willTarget = reset($canTargets);
                         $unit->attack($willTarget);
                         $t = $willTarget->n();
-                        echo "$n: attack $t\n";
+                        // echo "$n: attack $t\n";
                     } else {
-                        echo "$n: nothing to attack!\n";
+                        // echo "$n: nothing to attack!\n";
                     }
                 }
             }
@@ -323,6 +325,95 @@ class area
             }
         }
         return $minCell;
+    }
+
+    public function flood($start, $possibleGoals)
+    {
+        // echo "flooding from $start\n";
+        $dists = new map();
+        $dists->set($start, 0);
+        $stack = new set();
+        $stack->add($start);
+        $seen = new set();
+        $minDist = 999;
+        $minGoals = [];
+        while ($stack->count()) {
+            $current = $stack->shift();
+            // echo "current $current stack " . count($stack) . "\n";
+            $seen->add($current);
+            $d = $dists->get($current);
+            if ($d > $minDist + 2) {
+                continue;
+            }
+
+            if (in_array($current, $possibleGoals)) {
+                if ($d < $minDist) {
+                    $minDist = $d;
+                    $minGoals = [$current];
+                } elseif ($d == $minDist) {
+                    // a possibility
+                    $minGoals[] = $current;
+                }
+            }
+
+            foreach ($current->neighbours() as $n) {
+                if (!$seen->has($n) && !$stack->has($n)) {
+                    $stack->add($n);
+                }
+                $dists->set($n, $d + 1, true);
+            }
+        }
+        // foreach min goal , construct all possible paths
+        // echo "'constructing paths\n'";
+        $paths = [];
+        foreach ($minGoals as $goal) {
+            $paths = array_merge($paths, $this->constructPath(new path($goal), $start, $dists));
+        }
+        // return $paths;
+        // echo implode("\n", $paths);
+
+        // $g = [];
+        // foreach ($this->grid as $y => $row) {
+        //     $r = [];
+        //     foreach ($row as $x => $cell) {
+        //         $l = ' ' . $cell->icon . $cell->icon . ' ';
+        //         if ($dists->has($cell)) {
+        //             $l = ' ' . str_pad('' . $dists->get($cell), 2, '0', STR_PAD_LEFT) . ' ';
+        //         }
+        //         if (in_array($cell, $possibleGoals)) {
+        //             $l = ' XX ';
+        //         }
+        //         $r[] = $l;
+        //     }
+        //     $g[] = implode('', $r);
+        // }
+
+        // $g[] = '';
+        // echo implode("\n", $g);
+        return $paths;
+        // exit();
+    }
+
+    public function constructPath($path, $start, $distMap)
+    {
+        // echo "start is " . $distMap->get($start) . "\n";
+        $current = $path->zero();
+        $dist = $distMap->get($current);
+        if ($dist === 1) {
+            return [$path->bstep($start)];
+        }
+
+        // echo "constructpath - at $current with $dist steps to go til back to $start\n";
+
+        $paths = [];
+        foreach ($current->neighbours() as $n) {
+            $nd = $distMap->get($n);
+            // echo "found $n which is $nd\n";
+            if ($nd === $dist - 1) {
+                $paths = array_merge($paths, $this->constructPath($path->bstep($n), $start, $distMap));
+            }
+        }
+        return $paths;
     }
 
     public function astar($start, $goal)
@@ -507,6 +598,15 @@ class area
         $remainingHP = $this->gHP() + $this->eHP();
         return $this->completedTurns * $remainingHP;
     }
+
+    public function elfDeath()
+    {
+        return count(
+            array_filter($this->elves, function ($e) {
+                return !$e->alive();
+            })
+        );
+    }
 }
 
 class set
@@ -532,6 +632,11 @@ class set
     {
         return isset($this->hash[$o . '']);
     }
+
+    public function shift()
+    {
+        return array_shift($this->hash);
+    }
 }
 
 class map
@@ -539,8 +644,13 @@ class map
     public $hash = [];
     public $keys = [];
 
-    public function set($k, $v)
+    public function set($k, $v, $onlyIfSmaller = false)
     {
+        if ($onlyIfSmaller && $this->has($k)) {
+            // update v if the existing value is smaller
+            $e = $this->get($k);
+            $v = $e < $v ? $e : $v;
+        }
         $this->hash[$k . ''] = $v;
         $this->keys[$k . ''] = $k;
     }
@@ -584,6 +694,12 @@ class path
         array_unshift($this->arr, $step);
     }
 
+    public function bstep($step)
+    {
+        $new = array_merge([$step], $this->arr);
+        return new path($new);
+    }
+
     public function after($step)
     {
         $this->arr[] = $step;
@@ -608,6 +724,11 @@ class path
         return $this->arr[1]; //0 is the starting position
     }
 
+    public function zero()
+    {
+        return reset($this->arr);
+    }
+
     public function end()
     {
         return end($this->arr);
@@ -622,8 +743,8 @@ class path
     {
         $zero = reset($this->arr);
         $end = $this->end();
-        return "$zero $end";
-        // return implode(" -> ", $this->arr) . ' = ' . $this->dist();
+        // return "$zero $end";
+        return $this->p();
     }
 
     public function p()
@@ -841,16 +962,21 @@ class goblin extends unit
 class elf extends unit
 {
     public $icon = ELF;
+    public function __construct($cell, $att)
+    {
+        parent::__construct($cell);
+        $this->att = $att;
+    }
 }
 
-//$g1 = new area(explode("\n", $test));
-//$g1->p();
-//$g1->turn();
-//$g1->p();
-//$g1->turn();
-//$g1->p();
-//$g1->turn();
-//$g1->p();
+$g1 = new area(explode("\n", $test));
+// $g1->p();
+// $g1->turn();
+// $g1->p();
+// $g1->turn();
+// $g1->p();
+// $g1->turn();
+// $g1->p();
 
 //$g2 = new area(explode("\n", $test2));
 //$g2->p();
@@ -875,7 +1001,7 @@ $g = new area(explode("\n", $combat2));
 //$g->p();
 //$g->turn();
 //$g->p();
-//$g->play(FALSE);
+// $g->play(false);
 //$g->p();
 
 $combat3 = <<<TST
@@ -891,7 +1017,7 @@ $g = new area(explode("\n", $combat3));
 //$g->p();
 //$g->turn();
 //$g->p();
-//$g->play(FALSE);
+// $g->play(false);
 
 $combat4 = <<<TST
 #######
@@ -903,7 +1029,7 @@ $combat4 = <<<TST
 #######       
 TST;
 $g = new area(explode("\n", $combat4));
-//$g->play(FALSE);
+// $g->play(false);
 
 $combat5 = <<<TST
 #######   
@@ -915,7 +1041,7 @@ $combat5 = <<<TST
 #######
 TST;
 $g = new area(explode("\n", $combat5));
-//$g->play(FALSE);
+// $g->play(false);
 
 $combat6 = <<<TST
 #########
@@ -929,16 +1055,17 @@ $combat6 = <<<TST
 ######### 
 TST;
 $g = new area(explode("\n", $combat6));
-//$g->play(FALSE);
+// $g->play(false);
+// $g->turn(true);
 
 $g = new area(explode("\n", $in));
 // $g->p();
-$g->turn(false);
+// $g->turn(false);
 // $g->p();
-$g->turn(true);
+// $g->turn(true);
 // $g->turn(true);
 // $g->p();w
-// $g->play(true); // TOO LOW 234855 ALSO 238478 ALSO 248544
+// $g->play(false); // TOO LOW 234855 ALSO 238478 ALSO 248544
 
 // WRONGOOO
 //Game over! after 77 the score is 211365
@@ -954,7 +1081,7 @@ $corner1 = <<<TST
 ####
 TST;
 $g = new area(explode("\n", $corner1));
-//$g->play(FALSE); //13400
+// $g->play(false); //13400
 
 $corner2 = <<<TST
 #####
@@ -966,18 +1093,18 @@ $corner2 = <<<TST
 #####
 TST;
 $g = new area(explode("\n", $corner2));
-//$g->play(FALSE); //13987
+// $g->play(false); //13987
 
 // reddit wrong answer 187810 after 70
 // mine wrong 206312 after 74
 // correct answer should be 261855 after 99
-$in = file_get_contents('input15c.txt');
+// $in = file_get_contents('input15c.txt');
 $g = new area(explode("\n", $in));
 //$g->play(TRUE);
 
 // reddit correct 214731
 // mine 203588 @ 77
-$in = file_get_contents('input15d.txt');
+// $in = file_get_contents('input15d.txt');
 $g = new area(explode("\n", $in));
 //$g->play(TRUE);
 
@@ -988,3 +1115,26 @@ $g = new area(explode("\n", $in));
 // 	return $a->sort($b);
 // });
 // echo "Cells " . implode(", ", $cells) . "\n";
+
+$tests = [$combat, $combat3, $combat4, $combat5, $combat6, $in];
+// // $tests = [$in];
+foreach ($tests as $test) {
+    $eAtt = 5;
+    $elfDied = true;
+    while ($elfDied) {
+        $eAtt++;
+        echo "Trying $eAtt\n";
+        $g = new area(explode("\n", $test), $eAtt);
+        $g->play(false);
+        $elfDied = $g->elfDeath();
+        echo "$elfDied at elf attack $eAtt\n";
+    }
+    echo "\n\nElf invincible at $eAtt\n";
+}
+
+// $eAtt = 10;
+// echo "Trying $eAtt\n";
+// $g = new area(explode("\n", $in), $eAtt);
+// $g->play(false);
+// $elfDied = $g->elfDeath();
+// echo "$elfDied at elf attack $eAtt\n";

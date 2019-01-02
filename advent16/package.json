@@ -1,0 +1,17 @@
+{
+  "name": "advent16",
+  "version": "1.0.0",
+  "description": "advent of code",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "ts-node": "^7.0.1",
+    "typescript": "^3.2.2"
+  },
+  "dependencies": {
+    "@types/node": "^10.12.15"
+  }
+}

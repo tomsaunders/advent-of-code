@@ -114,8 +114,8 @@ class water
     public function down()
     {
         $this->y++;
-        $this->leftWall = true;
-        $this->rightWall = true;
+        $this->leftWall = false;
+        $this->rightWall = false;
     }
     public function left()
     {
@@ -124,6 +124,12 @@ class water
     public function right()
     {
         $this->x++;
+    }
+    public function up()
+    {
+        $this->y--;
+        $this->leftWall = false;
+        $this->rightWall = false;
     }
 
     public function move()
