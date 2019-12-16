@@ -17,7 +17,7 @@ function makePattern(repeat: number, basePattern: number[], length: number) {
 
 function fft(input: string, phases: number): string {
   const basePattern = [0, 1, 0, -1];
-  const inArray: number[] = input.split("").map(s => parseInt(s, 10));
+  const inArray: number[] = input.split("").map((s) => parseInt(s, 10));
   const outArray: number[] = inArray.slice(0);
 
   for (let p = 0; p < phases; p++) {
@@ -25,7 +25,7 @@ function fft(input: string, phases: number): string {
       const repeat = i + 1;
       const pattern = makePattern(repeat, basePattern, outArray.length);
       let total = 0;
-      for (let d = 0; d < outArray.length; d++) {
+      for (let d = i; d < outArray.length; d++) {
         const o = outArray[d] * pattern[d];
         total += o;
       }
@@ -58,13 +58,25 @@ function fft2(input: string, inputRepeat: number, phases: number): string {
   for (let r = 0; r < inputRepeat; r++) {
     bigInput += input;
   }
-  const answer = fft(bigInput, phases);
-  return answer;
-  // return answer.substr(offset, 8);
+
+  const smallerInput = bigInput.substr(offset);
+  const inArray: number[] = smallerInput.split("").map((s) => parseInt(s, 10));
+  const outArray: number[] = inArray.slice(0);
+
+  for (let p = 0; p < phases; p++) {
+    let total = outArray.reduce((s, c) => c + s, 0);
+    for (let i = 0; i < outArray.length; i++) {
+      const t = total;
+      total -= outArray[i];
+      outArray[i] = Math.abs(t) % 10;
+    }
+  }
+
+  return outArray.join("").substr(0, 8);
 }
 
-test("84462026", fft2("03036732577212944063491565474664", 100, 100));
-// test("78725270", fft2("02935109699940807407585447034323", 10000, 100));
-// test("53553731", fft2("03081770884921959731165446850517", 10000, 100));
+test("84462026", fft2("03036732577212944063491565474664", 10000, 100));
+test("78725270", fft2("02935109699940807407585447034323", 10000, 100));
+test("53553731", fft2("03081770884921959731165446850517", 10000, 100));
 
-// console.log("Answer", fft2(input, 10000, 100));
+console.log("Answer", fft2(input, 10000, 100));
