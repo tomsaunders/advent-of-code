@@ -11,13 +11,7 @@ const WHITE: string = "\x1b[37m";
 const RESET: string = "\x1b[0m";
 
 export class Cell {
-  constructor(
-    public grid: Grid,
-    public x: number,
-    public y: number,
-    public z: number,
-    public type: string
-  ) {}
+  constructor(public grid: Grid, public x: number, public y: number, public z: number, public type: string) {}
 
   public visited = false;
   public tentativeDist = 9999;
@@ -40,16 +34,14 @@ export class Cell {
     if (this.portalCode) {
       this.portal = this.grid.getPortal(this);
     }
-    this.neighbours = [this.north, this.south, this.east, this.west].filter(
-      c => !!c && c.isSpace
-    ) as Cell[];
+    this.neighbours = [this.north, this.south, this.east, this.west].filter((c) => !!c && c.isSpace) as Cell[];
     this.knownDistances = [];
     this.portalLinks = [];
     this.reset();
   }
 
   public getPortalLinks(level: number): [Cell, number][] {
-    return this.portalLinks.filter(pl => {
+    return this.portalLinks.filter((pl) => {
       if (level === 0) {
         if (["AA", "ZZ"].includes(pl[0].portalCode)) {
           return true;
@@ -79,21 +71,17 @@ export class Cell {
   }
 
   public get kdInfo(): string {
-    const kd = this.knownDistances
-      .map((v: [Cell, number]) => `${v[1]} to ${v[0].coord}`)
-      .join("\n\t");
+    const kd = this.knownDistances.map((v: [Cell, number]) => `${v[1]} to ${v[0].coord}`).join("\n\t");
     return `${this.label} knows distances = \n\t${kd}`;
   }
 
   public get plInfo(): string {
-    const kd = this.portalLinks
-      .map((v: [Cell, number]) => `${v[1]} to ${v[0].label}`)
-      .join("\n\t");
+    const kd = this.portalLinks.map((v: [Cell, number]) => `${v[1]} to ${v[0].label}`).join("\n\t");
     return `${this.label} has portal links = \n\t${kd}`;
   }
 
   public get unexplored(): Cell[] {
-    return this.neighbours.filter(n => !n.visited);
+    return this.neighbours.filter((n) => !n.visited);
   }
 
   public get code(): string {
@@ -120,12 +108,7 @@ export class Cell {
     if (!this.portalCode) {
       return false;
     }
-    return (
-      this.y === 2 ||
-      this.y === this.grid.maxY ||
-      this.x === 2 ||
-      this.x === this.grid.maxX
-    );
+    return this.y === 2 || this.y === this.grid.maxY || this.x === 2 || this.x === this.grid.maxX;
   }
 
   public get isInner(): boolean {
