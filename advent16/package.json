@@ -12,6 +12,8 @@
     "typescript": "^3.2.2"
   },
   "dependencies": {
-    "@types/node": "^10.12.15"
+    "@types/crypto-js": "^3.1.43",
+    "@types/node": "^10.12.15",
+    "md5-typescript": "^1.0.5"
   }
 }

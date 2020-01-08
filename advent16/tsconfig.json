@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "lib": ["es2017"],
+    "target": "es2015",
+    "lib": ["dom", "es2015", "es2017", "es2018"],
     "rootDir": ".",
     "outDir": "dist",
     "module": "commonjs",
@@ -12,5 +12,5 @@
     "inlineSources": true,
     "types": ["node"]
   },
-  "include": ["*"]
+  "include": ["*", "util/cell.ts", "util/grid.ts"]
 }
