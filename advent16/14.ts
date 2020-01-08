@@ -70,8 +70,8 @@ function oneTimePad(salt: string, stretch: boolean = false): number {
   return index;
 }
 
-// test(22728, oneTimePad("abc"));
-// console.log("Answer", oneTimePad(input));
-// console.log("\nPart 2\n");
-// test(22551, oneTimePad("abc", true));
+test(22728, oneTimePad("abc"));
+console.log("Answer", oneTimePad(input));
+console.log("\nPart 2\n");
+test(22551, oneTimePad("abc", true));
 console.log("Answer", oneTimePad(input, true));
