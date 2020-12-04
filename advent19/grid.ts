@@ -1,10 +1,9 @@
 import { Cell } from "./cell";
 
-const WALL: string = "#";
-const SPACE: string = ".";
+export const WALL: string = "#";
+export const SPACE: string = ".";
 
 export class Grid {
-  public recursive = false;
   public lines: string[] = [];
   public lookup: Map<string, Cell>;
   public minY: number = 0;
