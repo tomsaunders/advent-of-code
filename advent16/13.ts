@@ -12,7 +12,7 @@ function makeGrid(seed: number, range: number): Grid {
   function cell(x: number, y: number): string {
     const num = x * x + 3 * x + 2 * x * y + y + y * y + seed;
     const bin = num.toString(2);
-    const ones = bin.split("").filter(c => c === "1");
+    const ones = bin.split("").filter((c) => c === "1");
     return ones.length % 2 === 0 ? SPACE : WALL;
   }
 
@@ -56,7 +56,7 @@ function steps(seed: number, limit: number): number {
     queue.sort((a, b) => b[1] - a[1]);
   }
   grid.draw();
-  return grid.cells.filter(c => c.visited).length;
+  return grid.cells.filter((c) => c.visited).length;
 }
 
 console.log("Answer", steps(input, 50));
