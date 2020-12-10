@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/npx ts-node
 import * as fs from "fs";
 import { test } from "./util";
 
@@ -48,50 +48,20 @@ function minSteps(input: string, goal: string): number {
     .split("\n")
     .filter((l) => !!l.trim())
     .map((l) => new Replacement(l));
+  replacements.sort((a, b) => b.to.length - a.to.length);
 
-  const seen = new Set<string>();
-
-  const queue: [string, number][] = [[goal, 1]];
-  let min = 999;
-  // work backwards from the goal to make it find 'e'
-  let n = 0;
-  let minmade = goal;
-  while (queue.length) {
-    n++;
-    const [start, step] = queue.pop() as [string, number];
-    if (step >= min) {
-      continue;
-    }
-    if (n % 10000 == 0)
-      console.log(
-        `Length ${queue.length} step ${step} iterating from ${start}`
-      );
-
+  let steps = 0;
+  let formula = goal;
+  while (formula !== "e") {
     for (const r of replacements) {
-      for (let i = 0; i < start.length; i++) {
-        if (start.substr(i, r.to.length) === r.to) {
-          const before = start.substr(0, i);
-          const after = start.substr(i + r.to.length);
-          const makes = `${before}${r.from}${after}`;
-
-          if (makes === "e") {
-            min = Math.min(min, step);
-            console.log(`Made medicine in ${step}`);
-          } else if (!seen.has(makes)) {
-            seen.add(makes);
-            queue.push([makes, step + 1]);
-            queue.sort((a, b) => a.length - b.length);
-            if (makes.length < minmade.length) {
-              minmade = makes;
-              console.log("new shortest string", makes);
-            }
-          }
-        }
+      if (formula.includes(r.to)) {
+        formula = formula.replace(r.to, r.from);
+        steps++;
+        break;
       }
     }
   }
-
-  return min;
+  return steps;
 }
 
 const test2In = `e => H
