@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input11.txt", "utf8") as string;
 
@@ -108,11 +108,11 @@ enum DIR {
   U,
   R,
   D,
-  L
+  L,
 }
 
 function paint(input: string, startWhite: boolean = false): number {
-  const codes = input.split(",").map(s => parseInt(s, 10));
+  const codes = input.split(",").map((s) => parseInt(s, 10));
   const robot = new IntcodeProcessor(codes);
   let x = 0;
   let y = 0;
@@ -128,14 +128,14 @@ function paint(input: string, startWhite: boolean = false): number {
       U: "L",
       L: "D",
       D: "R",
-      R: "U"
+      R: "U",
     },
     {
       U: "R",
       R: "D",
       D: "L",
-      L: "U"
-    }
+      L: "U",
+    },
   ];
   let n = 0;
   while (!robot.halted) {

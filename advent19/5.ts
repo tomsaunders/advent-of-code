@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input5.txt", "utf8") as string;
 
@@ -23,7 +23,7 @@ function val(
 
 function op(line: string, inputResult: number = 1) {
   // console.log(line);
-  const codes = line.split(",").map(l => parseInt(l, 10));
+  const codes = line.split(",").map((l) => parseInt(l, 10));
   let pos = 0;
   let code = codes[pos];
   let codeStr = `00000000000${code}`;

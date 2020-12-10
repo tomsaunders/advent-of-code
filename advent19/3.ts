@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input3.txt", "utf8") as string;
 const lines = input.split("\n");

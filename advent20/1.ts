@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input1.txt", "utf8");
 const lines = input.split("\n").map((line) => parseInt(line.trim(), 10));

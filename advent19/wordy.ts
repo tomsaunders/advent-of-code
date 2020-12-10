@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("wordlist", "utf8") as string;
 const grid = `TJER
@@ -59,12 +59,12 @@ for (let y = 0; y < lines.length; y++) {
 }
 
 function word(letters: Letter[]): string {
-  return letters.map(l => l.letter).join("");
+  return letters.map((l) => l.letter).join("");
 }
 
 const candidates = new Set<string>();
 const valid = new Set<string>();
-const words = input.split("\n").map(w => w.toUpperCase());
+const words = input.split("\n").map((w) => w.toUpperCase());
 for (const w of words) {
   valid.add(w);
   for (let l = 1; l <= w.length; l++) {
@@ -84,7 +84,7 @@ function permute(finished: string[], progress: Letter[]): void {
   }
 
   const options = progress[progress.length - 1].neighbours.filter(
-    n => !progress.includes(n)
+    (n) => !progress.includes(n)
   );
   if (options.length === 0) {
     return;
@@ -111,7 +111,7 @@ for (const l of g.letters) {
   }
 }
 
-let out = Array.from(found.values()).filter(s => s.length > 2);
+let out = Array.from(found.values()).filter((s) => s.length > 2);
 out.sort((a, b) =>
   b.length == a.length ? b.charCodeAt(0) - a.charCodeAt(0) : b.length - a.length
 );

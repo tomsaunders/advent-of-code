@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 const input = 3018458;
 function test(a: any, b: any): void {
   const o = a == b ? `Test pass = ${a}` : `!!Test fail got ${b} wanted ${a}`;

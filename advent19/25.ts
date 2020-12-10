@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 import { IntcodeProcessor } from "./intcode";
 const input = fs.readFileSync("input25.txt", "utf8") as string;
@@ -26,7 +26,7 @@ function permutations(arr: any[]): string[][] {
   const all = new Set<string>();
   permute(all, arr, []);
 
-  return Array.from(all.values()).map(s => s.split(",").filter(s => !!s));
+  return Array.from(all.values()).map((s) => s.split(",").filter((s) => !!s));
 }
 
 function part1(codes: number[]): number {
@@ -75,7 +75,7 @@ inv`;
     "fuel cell",
     "astrolabe",
     "ornament",
-    "hologram"
+    "hologram",
   ];
   // reset
   for (const item of items) {
@@ -113,5 +113,5 @@ inv`;
   return 99;
 }
 
-const codes = input.split(",").map(s => parseInt(s, 10));
+const codes = input.split(",").map((s) => parseInt(s, 10));
 console.log("Part 1", part1(codes.slice(0)));

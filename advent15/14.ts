@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input14.txt", "utf8") as string;
 
@@ -43,15 +43,15 @@ const input1 = `Comet can fly 14 km/s for 10 seconds, but then must rest for 127
 Dancer can fly 16 km/s for 11 seconds, but then must rest for 162 seconds.`;
 
 function fastestDeer(input: string, time: number): number {
-  const reindeer = input.split("\n").map(l => new Reindeer(l));
-  return Math.max(...reindeer.map(r => r.tick(time)));
+  const reindeer = input.split("\n").map((l) => new Reindeer(l));
+  return Math.max(...reindeer.map((r) => r.tick(time)));
 }
 
 test(1120, fastestDeer(input1, 1000));
 console.log("Part One:", fastestDeer(input, 2503));
 
 function pointDeer(input: string, time: number): number {
-  const reindeer = input.split("\n").map(l => new Reindeer(l));
+  const reindeer = input.split("\n").map((l) => new Reindeer(l));
   for (let t = 1; t <= time; t++) {
     let winD = 0;
     for (const r of reindeer) {
@@ -63,7 +63,7 @@ function pointDeer(input: string, time: number): number {
       }
     }
   }
-  return Math.max(...reindeer.map(r => r.points));
+  return Math.max(...reindeer.map((r) => r.points));
 }
 
 console.log("");

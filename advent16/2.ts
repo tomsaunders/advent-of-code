@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node --pretty
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input2.txt", "utf8");
 const lines = input.split("\n");
@@ -7,19 +7,28 @@ enum Dir {
   U = "U",
   D = "D",
   R = "R",
-  L = "L"
+  L = "L",
 }
 
-const grid = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
+const grid = [
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9],
+];
 const twog = [
   [null, null, 1, null, null],
   [null, 2, 3, 4, null],
   [5, 6, 7, 8, 9],
   [null, "A", "B", "C", null],
-  [null, null, "D", null, null]
+  [null, null, "D", null, null],
 ];
 
-const getCode = (grid: any[][], lines: string[], px: number, py: number): string => {
+const getCode = (
+  grid: any[][],
+  lines: string[],
+  px: number,
+  py: number
+): string => {
   let code = "";
   for (const line of lines) {
     for (let m = 0; m < line.length; m++) {

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input21.txt", "utf8");
 const lines = input.split("\n");
@@ -60,7 +60,7 @@ const testLines: string[] = [
   "move position 1 to position 4",
   "move position 3 to position 0",
   "rotate based on position of letter b",
-  "rotate based on position of letter d"
+  "rotate based on position of letter d",
 ];
 
 // swap position 4 with position 0 swaps the first and last letters, producing the input for the next step, ebcda.

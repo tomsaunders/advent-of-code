@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input3.txt", "utf8");
 
@@ -9,7 +9,7 @@ const map: MoveMap = {
   "^": [0, -1],
   v: [0, 1],
   ">": [1, 0],
-  "<": [-1, 0]
+  "<": [-1, 0],
 };
 
 type Coord = [number, number];

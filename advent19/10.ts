@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input10.txt", "utf8") as string;
 
@@ -146,7 +146,7 @@ function laser(input: any, bx: number, by: number): void {
   );
   let rest = ordered.slice(0);
   while (destroyed < ordered.length) {
-    rest = rest.filter(t => !t.exploded);
+    rest = rest.filter((t) => !t.exploded);
     let b = -1;
     for (let i = 0; i < rest.length; i++) {
       const t = rest[i];

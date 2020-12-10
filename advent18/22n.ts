@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 
 const ROCKY = ".";
@@ -23,7 +23,11 @@ class Cave {
   public cells: Cell[][];
   public moves: Map<string, Move> = new Map<string, Move>();
 
-  public constructor(public depth: number, public targetX: number, public targetY: number) {
+  public constructor(
+    public depth: number,
+    public targetX: number,
+    public targetY: number
+  ) {
     this.cells = [];
     let risk = 0;
 
@@ -110,7 +114,9 @@ class Cell {
     } else if (this.x === 0) {
       g = this.y * 48271;
     } else {
-      g = this.cave.getCell(this.x - 1, this.y)!!.erosion * this.cave.getCell(this.x, this.y - 1)!!.erosion;
+      g =
+        this.cave.getCell(this.x - 1, this.y)!!.erosion *
+        this.cave.getCell(this.x, this.y - 1)!!.erosion;
     }
     this.geologic = g;
   }
@@ -156,9 +162,12 @@ class Cell {
     const cave = this.cave;
     const x = this.x;
     const y = this.y;
-    return [cave.getCell(x, y + 1), cave.getCell(x + 1, y), cave.getCell(x, y - 1), cave.getCell(x - 1, y)].filter(
-      (cell) => !!cell
-    ) as Cell[];
+    return [
+      cave.getCell(x, y + 1),
+      cave.getCell(x + 1, y),
+      cave.getCell(x, y - 1),
+      cave.getCell(x - 1, y),
+    ].filter((cell) => !!cell) as Cell[];
   }
 
   public dist(other: Cell) {

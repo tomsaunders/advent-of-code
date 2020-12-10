@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 const input = `Frosting: capacity 4, durability -2, flavor 0, texture 0, calories 5
 Candy: capacity 0, durability 5, flavor -1, texture 0, calories 8
 Butterscotch: capacity -1, durability 0, flavor 5, texture 0, calories 6
@@ -32,7 +32,12 @@ class Ingredient {
   }
 }
 
-function permute(finished: any[][], size: number, rem: number, progress: number[]): void {
+function permute(
+  finished: any[][],
+  size: number,
+  rem: number,
+  progress: number[]
+): void {
   if (progress.length === size - 1) {
     finished.push(progress.concat(rem));
     return;
@@ -50,7 +55,7 @@ function permutations(size: number, limit: number): number[][] {
 }
 
 function bestRecipe(input: string, calorieTarget?: number): number {
-  const ingredients = input.split("\n").map(l => new Ingredient(l));
+  const ingredients = input.split("\n").map((l) => new Ingredient(l));
   const perms = permutations(ingredients.length, 100);
   let max = 0;
   for (const perm of perms) {
@@ -66,7 +71,10 @@ function bestRecipe(input: string, calorieTarget?: number): number {
       texture += ingredients[i].texture * perm[i];
       calories += ingredients[i].calories * perm[i];
     }
-    const score = Math.min(capacity, durability, flavor, texture) < 1 ? 0 : capacity * durability * flavor * texture;
+    const score =
+      Math.min(capacity, durability, flavor, texture) < 1
+        ? 0
+        : capacity * durability * flavor * texture;
     if (!calorieTarget || calories === calorieTarget) {
       max = Math.max(max, score);
     }

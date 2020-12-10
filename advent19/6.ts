@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 import { stringify } from "querystring";
 const input = fs.readFileSync("input6.txt", "utf8") as string;

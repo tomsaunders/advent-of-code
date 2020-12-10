@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 import { Grid } from "./grid";
 import { Cell } from "./cell";
@@ -145,7 +145,14 @@ function keySteps(input: string): number {
       const nk = `${n.coord}:${keys}`;
       const before = visited.get(nk) || 99999999;
       const nd = dist + d;
-      console.log("path option:", n.label, "reachable in ", d, "steps, seen before?", before);
+      console.log(
+        "path option:",
+        n.label,
+        "reachable in ",
+        d,
+        "steps, seen before?",
+        before
+      );
       if (nd < before) {
         console.log("queued");
         queue.push([n, keys, nd, order]);

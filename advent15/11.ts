@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 const input = "vzbxkghb";
 
 const alphabet = "abcdefghijklmnopqrstuvwxyz";

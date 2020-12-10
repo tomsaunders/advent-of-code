@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input17.txt", "utf8");
 const test = `x=495, y=2..7
@@ -110,7 +110,7 @@ class WaterPath {
     let dy = y + 1;
     let c = this.cell(x, y);
     let d = this.cell(x, dy);
-    while (c !== CLAY && (d !== OPEN && d !== DRIP)) {
+    while (c !== CLAY && d !== OPEN && d !== DRIP) {
       x--;
       c = this.cell(x, y);
       d = this.cell(x, dy);
@@ -123,7 +123,7 @@ class WaterPath {
     let dy = y + 1;
     let c = this.cell(x, y);
     let d = this.cell(x, dy);
-    while (c !== CLAY && (d !== OPEN && d !== DRIP)) {
+    while (c !== CLAY && d !== OPEN && d !== DRIP) {
       x++;
       c = this.cell(x, y);
       d = this.cell(x, dy);
@@ -135,7 +135,10 @@ class WaterPath {
   public constructor(public x: number, public y: number, private map: Map) {}
 
   public run(): Coord[] {
-    while ((this.down === OPEN || this.down === DRIP) && this.y < this.map.maxY) {
+    while (
+      (this.down === OPEN || this.down === DRIP) &&
+      this.y < this.map.maxY
+    ) {
       this.y++;
       this.drip();
       this.rightWall = this.leftWall = false;
@@ -162,7 +165,10 @@ class WaterPath {
       } else {
         // fall both
         this.fill(l, r, DRIP);
-        return [[l, this.y], [r, this.y]];
+        return [
+          [l, this.y],
+          [r, this.y],
+        ];
       }
     }
     return [[this.x, this.y]];

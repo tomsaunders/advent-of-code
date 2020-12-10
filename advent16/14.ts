@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as crypto from "crypto";
 
 const input = "ngcjuoqr";
@@ -13,10 +13,7 @@ function oneTimePad(salt: string, stretch: boolean = false): number {
   const map = new Map<string, string>();
   function getHash(input: string): string {
     if (!map.has(input)) {
-      const hash = crypto
-        .createHash("md5")
-        .update(input)
-        .digest("hex");
+      const hash = crypto.createHash("md5").update(input).digest("hex");
       map.set(input, hash);
     }
     return map.get(input) as string;
@@ -24,15 +21,9 @@ function oneTimePad(salt: string, stretch: boolean = false): number {
 
   function stretchHash(input: string): string {
     if (!map.has(input)) {
-      let hash = crypto
-        .createHash("md5")
-        .update(input)
-        .digest("hex");
+      let hash = crypto.createHash("md5").update(input).digest("hex");
       for (let x = 0; x < 2016; x++) {
-        hash = crypto
-          .createHash("md5")
-          .update(hash)
-          .digest("hex");
+        hash = crypto.createHash("md5").update(hash).digest("hex");
       }
       map.set(input, hash);
     }

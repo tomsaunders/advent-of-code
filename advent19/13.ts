@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input13.txt", "utf8") as string;
 
@@ -126,7 +126,7 @@ function game(codes: number[]): number {
   console.log("Blocks", blocks);
   return blocks;
 }
-const codes = input.split(",").map(s => parseInt(s, 10));
+const codes = input.split(",").map((s) => parseInt(s, 10));
 console.log("Answer", game(codes.slice(0)));
 console.log("\n Part 2");
 

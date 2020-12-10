@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 
 const ROCKY = ".";
@@ -21,7 +21,11 @@ const target = [10, 10];
 
 class Cave {
   public cells: Cell[][];
-  public constructor(public depth: number, public targetX: number, public targetY: number) {
+  public constructor(
+    public depth: number,
+    public targetX: number,
+    public targetY: number
+  ) {
     this.cells = [];
     let risk = 0;
     for (let y = 0; y <= targetY + 20; y++) {
@@ -104,7 +108,9 @@ class Cell {
     } else if (this.x === 0) {
       g = this.y * 48271;
     } else {
-      g = this.cave.getCell(this.x - 1, this.y)!!.erosion * this.cave.getCell(this.x, this.y - 1)!!.erosion;
+      g =
+        this.cave.getCell(this.x - 1, this.y)!!.erosion *
+        this.cave.getCell(this.x, this.y - 1)!!.erosion;
     }
     this.geologic = g;
   }
@@ -150,9 +156,12 @@ class Cell {
     const cave = this.cave;
     const x = this.x;
     const y = this.y;
-    return [cave.getCell(x, y + 1), cave.getCell(x + 1, y), cave.getCell(x, y - 1), cave.getCell(x - 1, y)].filter(
-      (cell) => !!cell
-    ) as Cell[];
+    return [
+      cave.getCell(x, y + 1),
+      cave.getCell(x + 1, y),
+      cave.getCell(x, y - 1),
+      cave.getCell(x - 1, y),
+    ].filter((cell) => !!cell) as Cell[];
   }
 }
 
@@ -195,10 +204,17 @@ class Move {
     return moves;
   }
 
-  public constructor(public cell: Cell, public cost: number, public tool: string) {}
+  public constructor(
+    public cell: Cell,
+    public cost: number,
+    public tool: string
+  ) {}
 
   public dist(other: Move) {
-    return Math.abs(this.cell.y - other.cell.y) + Math.abs(this.cell.x - other.cell.x);
+    return (
+      Math.abs(this.cell.y - other.cell.y) +
+      Math.abs(this.cell.x - other.cell.x)
+    );
   }
 
   public canAccess(other: Move) {
@@ -413,7 +429,10 @@ class Path {
   }
 
   public toString(): string {
-    return `${this.arr.length} move path with cost ${this.score}\n` + this.arr.join("->");
+    return (
+      `${this.arr.length} move path with cost ${this.score}\n` +
+      this.arr.join("->")
+    );
   }
 
   public move(next: Move): Path | undefined {
