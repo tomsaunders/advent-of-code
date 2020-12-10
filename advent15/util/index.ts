@@ -27,3 +27,6 @@ export function test(a: any, b: any): void {
 export function arrSum(arr: number[]): number {
   return arr.reduce((a, b) => a + b, 0);
 }
+export function arrProd(arr: number[]): number {
+  return arr.reduce((a, b) => a * b, 1);
+}
