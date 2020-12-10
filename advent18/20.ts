@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 import { stringify } from "querystring";
 const input = fs
@@ -289,16 +289,13 @@ const tests = [
   "ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN",
   "^ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$",
   "^WSSEESWWWNW(S|NENNEEEENN(ESSSSW(NWSW|SSEN)|WSWWN(E|WWS(E|SS))))$",
-  input
+  input,
 ];
 for (let test of tests) {
   test = test.replace("^", "").replace("$", "");
   console.log(test.substr(0, 100));
   const map = new Grid();
-  const start = map
-    .getCell(0, 0)
-    .room(0)
-    .icon(POS);
+  const start = map.getCell(0, 0).room(0).icon(POS);
   start.dist = 0;
   start.cheat(test.split(""));
   map.finish();

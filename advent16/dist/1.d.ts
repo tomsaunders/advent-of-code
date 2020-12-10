@@ -1,2 +1,2 @@
-#!/usr/bin/env npx ts-node --pretty
+#!/usr/bin/env ts-node
 export {};

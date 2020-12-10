@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input21.txt", "utf8") as string;
 
@@ -148,7 +148,7 @@ function springdroid(codes: number[]): number {
   return 99;
 }
 
-const codes = input.split(",").map(s => parseInt(s, 10));
+const codes = input.split(",").map((s) => parseInt(s, 10));
 console.log("Answer", springdroid(codes.slice(0)));
 
 function springdroid2(codes: number[]): number {

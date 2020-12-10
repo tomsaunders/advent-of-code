@@ -1,10 +1,10 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input2.txt", "utf8") as string;
 const lines = input.split("\n");
 
 function op(line: string) {
-  const codes = line.split(",").map(l => parseInt(l, 10));
+  const codes = line.split(",").map((l) => parseInt(l, 10));
   let pos = 0;
   let op = codes[pos];
   while (op !== 99) {
@@ -40,7 +40,7 @@ test("2,3,0,6,99", op("2,3,0,3,99"));
 test("2,4,4,5,99,9801", op("2,4,4,5,99,0"));
 test("30,1,1,4,2,5,6,0,99", op("1,1,1,4,99,5,6,0,99"));
 
-const codes = input.split(",").map(l => parseInt(l, 10));
+const codes = input.split(",").map((l) => parseInt(l, 10));
 const immutable = codes.slice(0);
 codes[1] = 12;
 codes[2] = 2;

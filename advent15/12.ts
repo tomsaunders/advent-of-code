@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input12.txt", "utf8");
 
@@ -41,7 +41,7 @@ const tests = [
   '[1,{"c":"red","b":2},3]',
   '{"d":"red","e":[1,2,3,4],"f":5}',
   '[1,"red",5]',
-  input
+  input,
 ];
 console.log("\nPart 1\n");
 for (const test of tests) {

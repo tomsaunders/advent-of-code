@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input11.txt", "utf8") as string;
 
@@ -60,11 +60,26 @@ class Moon {
   }
 }
 
-const testMoons = [new Moon(-1, 0, 2), new Moon(2, -10, -7), new Moon(4, -8, 8), new Moon(3, 5, -1)];
+const testMoons = [
+  new Moon(-1, 0, 2),
+  new Moon(2, -10, -7),
+  new Moon(4, -8, 8),
+  new Moon(3, 5, -1),
+];
 
-const test2 = [new Moon(-8, -10, 0), new Moon(5, 5, 10), new Moon(2, -7, 3), new Moon(9, -8, -3)];
+const test2 = [
+  new Moon(-8, -10, 0),
+  new Moon(5, 5, 10),
+  new Moon(2, -7, 3),
+  new Moon(9, -8, -3),
+];
 
-const inputMoons = [new Moon(1, 4, 4), new Moon(-4, -1, 19), new Moon(-15, -14, 12), new Moon(-17, 1, 10)];
+const inputMoons = [
+  new Moon(1, 4, 4),
+  new Moon(-4, -1, 19),
+  new Moon(-15, -14, 12),
+  new Moon(-17, 1, 10),
+];
 
 function run(moons: Moon[], time: number): void {
   for (let m = 0; m < moons.length; m++) {

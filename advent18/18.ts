@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input18.txt", "utf8");
 const test = `.#.#...|#.
@@ -36,13 +36,18 @@ class Cell {
     return ns;
   }
 
-  public constructor(public x: number, public y: number, public icon: string, public grid: Grid) {}
+  public constructor(
+    public x: number,
+    public y: number,
+    public icon: string,
+    public grid: Grid
+  ) {}
 
   public move(): void {
     const neighbours = this.neighbours;
     // console.log("moving " + this, " ... neighbours are" + neighbours.join(" : "));
-    const trees = neighbours.filter(n => n.icon === TREE).length;
-    const yards = neighbours.filter(n => n.icon === YARD).length;
+    const trees = neighbours.filter((n) => n.icon === TREE).length;
+    const yards = neighbours.filter((n) => n.icon === YARD).length;
     // const opens = neighbours.filter(n => n.icon === OPEN).length;
     // console.log("there are ", trees, " trees and ", yards, " yards out of ", neighbours.length);
 
@@ -73,8 +78,8 @@ class Grid {
   public minutes = 0;
   public areadySeen = new Map<number, number>();
   public get score(): number {
-    const trees = this.cells.filter(n => n.icon === TREE).length;
-    const yards = this.cells.filter(n => n.icon === YARD).length;
+    const trees = this.cells.filter((n) => n.icon === TREE).length;
+    const yards = this.cells.filter((n) => n.icon === YARD).length;
     return trees * yards;
   }
 
@@ -102,8 +107,8 @@ class Grid {
 
   public play(count: number, part2: boolean = false): void {
     while (this.minutes < count) {
-      this.cells.forEach(cell => cell.move());
-      this.cells.forEach(cell => (cell.icon = cell.next));
+      this.cells.forEach((cell) => cell.move());
+      this.cells.forEach((cell) => (cell.icon = cell.next));
       this.minutes++;
       if (part2) {
         const score = this.score;

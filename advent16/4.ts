@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node --pretty
+#!/usr/bin/env ts-node
 // Lesson: sort returns an array but affects it in place, therefore the order of the inputs was affected
 // and part 2 gave the wrong answer because things were no longer in the expected column
 
@@ -35,7 +35,11 @@ class Room {
       .join("");
     return calcSum === this.checksum;
   }
-  public constructor(public name: string, public sectorID: number, public checksum: string) {}
+  public constructor(
+    public name: string,
+    public sectorID: number,
+    public checksum: string
+  ) {}
 
   public decrypt(): void {
     let d = "";
@@ -70,6 +74,9 @@ for (const line of lines) {
 }
 
 const real = rooms.filter((room) => room.isReal);
-const sum = real.reduce((sum: number, room: Room): number => sum + room.sectorID, 0);
+const sum = real.reduce(
+  (sum: number, room: Room): number => sum + room.sectorID,
+  0
+);
 console.log(sum);
 real.forEach((room) => room.decrypt());

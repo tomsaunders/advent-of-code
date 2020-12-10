@@ -1,8 +1,8 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input2.txt", "utf8");
 
-const lines = input.split("\n").map(line => line.trim());
+const lines = input.split("\n").map((line) => line.trim());
 const tests = ["2x3x4", "1x1x10"];
 
 class Present {
@@ -10,7 +10,7 @@ class Present {
   public w: number;
   public h: number;
   constructor(line: string) {
-    [this.l, this.w, this.h] = line.split("x").map(bit => parseInt(bit, 10));
+    [this.l, this.w, this.h] = line.split("x").map((bit) => parseInt(bit, 10));
   }
 
   public wrapping(): number {
@@ -36,9 +36,15 @@ for (const test of tests) {
   // console.log("test ribbon", test, p.ribbon());
 }
 
-const presents = lines.map(line => new Present(line));
-const wraps = presents.map(p => p.wrapping());
-const ribs = presents.map(p => p.ribbon());
+const presents = lines.map((line) => new Present(line));
+const wraps = presents.map((p) => p.wrapping());
+const ribs = presents.map((p) => p.ribbon());
 
-console.log("Total wrapping p1: ", wraps.reduce((previous, current) => previous + current, 0));
-console.log("Total ribbon p2: ", ribs.reduce((previous, current) => previous + current, 0));
+console.log(
+  "Total wrapping p1: ",
+  wraps.reduce((previous, current) => previous + current, 0)
+);
+console.log(
+  "Total ribbon p2: ",
+  ribs.reduce((previous, current) => previous + current, 0)
+);

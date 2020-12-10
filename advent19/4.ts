@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 import { runInNewContext } from "vm";
 // const input = fs.readFileSync("input4.txt", "utf8") as string;

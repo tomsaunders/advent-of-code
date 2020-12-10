@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 import { IntcodeProcessor } from "./intcode";
 const input = fs.readFileSync("input23.txt", "utf8") as string;
@@ -41,7 +41,7 @@ function part1(codes: number[]): number {
   return y255;
 }
 
-const codes = input.split(",").map(s => parseInt(s, 10));
+const codes = input.split(",").map((s) => parseInt(s, 10));
 console.log("Part 1", part1(codes.slice(0)));
 console.log("Part 2", part2(codes.slice(0)));
 

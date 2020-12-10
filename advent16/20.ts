@@ -1,8 +1,8 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input20.txt", "utf8");
 const lines = input.split("\n");
-const ranges = lines.map(l => l.split("-").map(s => parseInt(s, 10)));
+const ranges = lines.map((l) => l.split("-").map((s) => parseInt(s, 10)));
 ranges.sort((a, b) => a[0] - b[0]);
 let lowest = 1;
 

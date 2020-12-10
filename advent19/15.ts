@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input15.txt", "utf8") as string;
 
@@ -235,7 +235,7 @@ class Cell {
   }
   public get neighbours(): Cell[] {
     return [this.north, this.south, this.east, this.west].filter(
-      c => !!c && !c.isWall
+      (c) => !!c && !c.isWall
     ) as Cell[];
   }
 
@@ -296,7 +296,7 @@ class Grid {
         n.tentativeDist = Math.min(d, n.tentativeDist);
       }
       current.visited = true;
-      unvisitedSet = unvisitedSet.filter(c => !c.visited);
+      unvisitedSet = unvisitedSet.filter((c) => !c.visited);
       unvisitedSet.sort((a, b) => b.tentativeDist - a.tentativeDist);
       current = unvisitedSet.pop() as Cell;
     }
@@ -304,7 +304,7 @@ class Grid {
   }
 
   public longestPath(from: Cell): number {
-    let unvisitedSet: Cell[] = Array.from(this.lookup.values()).map(c => {
+    let unvisitedSet: Cell[] = Array.from(this.lookup.values()).map((c) => {
       c.tentativeDist = 9999;
       c.visited = false;
       return c;
@@ -318,12 +318,12 @@ class Grid {
         n.tentativeDist = Math.min(d, n.tentativeDist);
       }
       current.visited = true;
-      unvisitedSet = unvisitedSet.filter(c => !c.visited);
+      unvisitedSet = unvisitedSet.filter((c) => !c.visited);
       unvisitedSet.sort((a, b) => b.tentativeDist - a.tentativeDist);
       current = unvisitedSet.pop() as Cell;
     }
     const visitedSet: Cell[] = Array.from(this.lookup.values()).filter(
-      c => !c.isWall
+      (c) => !c.isWall
     );
     visitedSet.sort((a, b) => b.tentativeDist - a.tentativeDist);
     const longest = visitedSet.shift() as Cell;
@@ -378,6 +378,6 @@ function droid(codes: number[]): number {
   console.log("Part 2", map.longestPath(found!));
   return shortest;
 }
-const codes = input.split(",").map(s => parseInt(s, 10));
+const codes = input.split(",").map((s) => parseInt(s, 10));
 console.log("Answer", droid(codes.slice(0)));
 // console.log("\n Part 2");

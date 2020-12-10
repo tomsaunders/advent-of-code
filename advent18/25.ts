@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input25.txt", "utf8");
 const test = `0,0,0,0
@@ -48,11 +48,19 @@ const test4 = `1,-1,-1,-2
 class Point {
   public constellation: Constellation | undefined;
 
-  public constructor(public x: number, public y: number, public z: number, public t: number) {}
+  public constructor(
+    public x: number,
+    public y: number,
+    public z: number,
+    public t: number
+  ) {}
 
   public dist(other: Point): number {
     return (
-      Math.abs(this.x - other.x) + Math.abs(this.y - other.y) + Math.abs(this.z - other.z) + Math.abs(this.t - other.t)
+      Math.abs(this.x - other.x) +
+      Math.abs(this.y - other.y) +
+      Math.abs(this.z - other.z) +
+      Math.abs(this.t - other.t)
     );
   }
 

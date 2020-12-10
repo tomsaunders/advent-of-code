@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import { Grid, SPACE, WALL, Cell, PathStep } from "./util";
 
 const input = 1350;

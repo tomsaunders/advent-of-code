@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input6.txt", "utf8");
 
@@ -18,7 +18,9 @@ for (let a = 0; a < 1000; a++) {
 }
 
 for (let line of lines) {
-  const match = line.match(/(toggle|turn on|turn off) (\d*),(\d*) through (\d*),(\d*)/);
+  const match = line.match(
+    /(toggle|turn on|turn off) (\d*),(\d*) through (\d*),(\d*)/
+  );
   if (!match) continue;
   const instruction = match[1];
   const [, , fx, fy, tx, ty] = match.map((v) => parseInt(v, 10));
@@ -38,5 +40,12 @@ for (let line of lines) {
   }
 }
 
-console.log(grid.reduce((count, row) => row.reduce((rc, cell) => (cell ? rc + 1 : rc), count), 0));
-console.log(twog.reduce((count, row) => row.reduce((rc, cell) => rc + cell, count), 0));
+console.log(
+  grid.reduce(
+    (count, row) => row.reduce((rc, cell) => (cell ? rc + 1 : rc), count),
+    0
+  )
+);
+console.log(
+  twog.reduce((count, row) => row.reduce((rc, cell) => rc + cell, count), 0)
+);

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node --pretty
+#!/usr/bin/env ts-node
 // Lesson: sort returns an array but affects it in place, therefore the order of the inputs was affected
 // and part 2 gave the wrong answer because things were no longer in the expected column
 
@@ -25,7 +25,9 @@ console.log(triangles.filter(isPossible).length);
 let colPoss = 0;
 for (let c = 0; c < 3; c++) {
   for (let r = 0; r < triangles.length; r += 3) {
-    if (isPossible([triangles[r][c], triangles[r + 1][c], triangles[r + 2][c]])) {
+    if (
+      isPossible([triangles[r][c], triangles[r + 1][c], triangles[r + 2][c]])
+    ) {
       colPoss++;
     }
   }

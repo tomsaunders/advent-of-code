@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const inputImmune = `2785 units each with 4474 hit points (weak to cold) with an attack that does 14 fire damage at initiative 20
 4674 units each with 7617 hit points (immune to slashing, bludgeoning; weak to fire) with an attack that does 15 slashing damage at initiative 15
@@ -34,7 +34,7 @@ enum AttackType {
   fire = "fire",
   default = "default",
   cold = "cold",
-  bludgeoning = "bludgeoning"
+  bludgeoning = "bludgeoning",
 }
 
 class Group {
@@ -78,10 +78,7 @@ class Group {
       if (weak) {
         const bits = weak.includes("; ") ? weak.split("; ") : [weak];
         for (const b of bits) {
-          const parts = b
-            .replace(/,/g, "")
-            .replace(")", "")
-            .split(" ");
+          const parts = b.replace(/,/g, "").replace(")", "").split(" ");
           if (parts[0] === "immune") {
             this.immunities = parts.slice(2) as AttackType[];
           } else if (parts[0] === "weak") {
@@ -112,7 +109,9 @@ class Group {
     if (!this.target || !this.target.unitCount) {
       return 0;
     }
-    return this.target.takeDamage(this.target.calcDamage(this.effectivePower, this.attackType));
+    return this.target.takeDamage(
+      this.target.calcDamage(this.effectivePower, this.attackType)
+    );
   }
 }
 
@@ -121,11 +120,17 @@ class Army {
   public enemy: Army | undefined;
 
   public get score(): number {
-    return this.groups.reduce((value: number, group: Group) => (value += group.unitCount), 0);
+    return this.groups.reduce(
+      (value: number, group: Group) => (value += group.unitCount),
+      0
+    );
   }
 
   public get health(): number {
-    return this.groups.reduce((value: number, group: Group) => (value += group.totalHP), 0);
+    return this.groups.reduce(
+      (value: number, group: Group) => (value += group.totalHP),
+      0
+    );
   }
 
   public get availableTargets(): Group[] {
@@ -158,7 +163,9 @@ class Army {
     for (const e of this.enemy!!.groups) {
       e.selected = false;
     }
-    const groups = this.groups.sort((a, b) => b.effectivePower - a.effectivePower);
+    const groups = this.groups.sort(
+      (a, b) => b.effectivePower - a.effectivePower
+    );
     for (const group of groups) {
       if (!group.unitCount) {
         continue;
@@ -167,18 +174,27 @@ class Army {
       let max = 0;
       let target;
       for (const potential of this.enemy!!.availableTargets) {
-        const damage = potential.calcDamage(group.effectivePower, group.attackType);
+        const damage = potential.calcDamage(
+          group.effectivePower,
+          group.attackType
+        );
         if (damage > max) {
           max = damage;
           target = potential;
         } else if (damage === max && target) {
           if (potential.effectivePower > target.effectivePower) {
             target = potential;
-          } else if (potential.effectivePower === target.effectivePower && potential.initiative > target.initiative) {
+          } else if (
+            potential.effectivePower === target.effectivePower &&
+            potential.initiative > target.initiative
+          ) {
             target = potential;
           }
         }
-        if (print) console.log(`${group.name} would deal defending group ${potential.num} ${damage} damage`);
+        if (print)
+          console.log(
+            `${group.name} would deal defending group ${potential.num} ${damage} damage`
+          );
       }
       if (target) {
         target.selected = true;
@@ -218,7 +234,10 @@ const attack = (a: Army, b: Army, print: boolean) => {
   for (const group of groups) {
     if (group.unitCount && group.target) {
       const kills = group.attack();
-      if (print) console.log(`${group.name} attacks defending group ${group.target.num}, killing ${kills} units`);
+      if (print)
+        console.log(
+          `${group.name} attacks defending group ${group.target.num}, killing ${kills} units`
+        );
     }
   }
 };
@@ -241,7 +260,9 @@ const fight = (infectionArmy: Army, immuneArmy: Army, print: boolean) => {
     }
     prev = hp;
   }
-  console.log(`${infectionArmy.name} : ${infectionArmy.score} / ${immuneArmy.name} : ${immuneArmy.score}`);
+  console.log(
+    `${infectionArmy.name} : ${infectionArmy.score} / ${immuneArmy.name} : ${immuneArmy.score}`
+  );
   console.log(Math.max(infectionArmy.score, immuneArmy.score));
 };
 

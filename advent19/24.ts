@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input24.txt", "utf8") as string;
 
@@ -49,7 +49,7 @@ class Cell {
 
   public tick(): void {
     const bugs = [this.north, this.south, this.east, this.west].filter(
-      c => !!c && c.isBug
+      (c) => !!c && c.isBug
     ) as Cell[];
     this.next = this.type;
     if (this.isBug && bugs.length !== 1) {
@@ -67,7 +67,7 @@ class Cell {
 
     const bugs = this.grid
       .getNeighbours(this)
-      .filter(c => !!c && c.isBug) as Cell[];
+      .filter((c) => !!c && c.isBug) as Cell[];
     if (this.isBug && bugs.length !== 1) {
       this.next = SPACE;
     } else if (!this.isBug && (bugs.length === 1 || bugs.length === 2)) {
@@ -165,7 +165,7 @@ class Grid {
   }
 
   public get bugs(): number {
-    return this.cells.filter(c => c.isBug).length;
+    return this.cells.filter((c) => c.isBug).length;
   }
 
   public get biodiversity(): number {
@@ -207,8 +207,8 @@ class Grid {
   public get bounds(): number[] {
     const bounds = [0, 0, 0, 4, 4, 0];
     this.cells
-      .filter(c => c.isBug)
-      .forEach(c => {
+      .filter((c) => c.isBug)
+      .forEach((c) => {
         bounds[2] = Math.min(bounds[2], c.z);
         bounds[5] = Math.max(bounds[5], c.z);
       });

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input19.txt", "utf8") as string;
 
@@ -132,7 +132,7 @@ function tractor(codes: number[]): number {
   }
   return affected;
 }
-const codes = input.split(",").map(s => parseInt(s, 10));
+const codes = input.split(",").map((s) => parseInt(s, 10));
 console.log("Answer", tractor(codes.slice(0)));
 
 function tractor2(codes: number[]): number {

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node --pretty
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input1.txt", "utf8");
 const ins = input.split(", ");
@@ -9,7 +9,7 @@ enum Dir {
   S,
   W,
   R = "R",
-  L = "L"
+  L = "L",
 }
 let dir = Dir.N;
 const right = new Map<Dir, Dir>();
@@ -41,7 +41,10 @@ for (const turn of ins) {
         py--;
         const k = `${px},${py}`;
         if (seen.has(k)) {
-          console.log(`already seen ${px},${py}!!`, Math.abs(px) + Math.abs(py));
+          console.log(
+            `already seen ${px},${py}!!`,
+            Math.abs(px) + Math.abs(py)
+          );
         }
         seen.add(k);
       }
@@ -51,7 +54,10 @@ for (const turn of ins) {
         px++;
         const k = `${px},${py}`;
         if (seen.has(k)) {
-          console.log(`already seen ${px},${py}!!`, Math.abs(px) + Math.abs(py));
+          console.log(
+            `already seen ${px},${py}!!`,
+            Math.abs(px) + Math.abs(py)
+          );
         }
         seen.add(k);
       }
@@ -61,7 +67,10 @@ for (const turn of ins) {
         py++;
         const k = `${px},${py}`;
         if (seen.has(k)) {
-          console.log(`already seen ${px},${py}!!`, Math.abs(px) + Math.abs(py));
+          console.log(
+            `already seen ${px},${py}!!`,
+            Math.abs(px) + Math.abs(py)
+          );
         }
         seen.add(k);
       }
@@ -71,7 +80,10 @@ for (const turn of ins) {
         px--;
         const k = `${px},${py}`;
         if (seen.has(k)) {
-          console.log(`already seen ${px},${py}!!`, Math.abs(px) + Math.abs(py));
+          console.log(
+            `already seen ${px},${py}!!`,
+            Math.abs(px) + Math.abs(py)
+          );
         }
         seen.add(k);
       }

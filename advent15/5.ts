@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input5.txt", "utf8");
 
@@ -13,7 +13,10 @@ const isNice = (word: string): boolean => {
 };
 
 const isTwoNice = (word: string): boolean => {
-  return !!word.match(/.*([a-z]{2}).*(\1).*/g) && !!word.match(/.*([a-z])[a-z](\1).*/g);
+  return (
+    !!word.match(/.*([a-z]{2}).*(\1).*/g) &&
+    !!word.match(/.*([a-z])[a-z](\1).*/g)
+  );
 };
 
 let c = 0;

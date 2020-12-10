@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input23.txt", "utf8");
 const test = `pos=<0,0,0>, r=4
@@ -57,11 +57,19 @@ class Position {
   }
 
   public mutate(seed: number = 0): Position {
-    return new Position(fuzz(this.x, seed), fuzz(this.y, seed), fuzz(this.z, seed));
+    return new Position(
+      fuzz(this.x, seed),
+      fuzz(this.y, seed),
+      fuzz(this.z, seed)
+    );
   }
 
   public crossover(other: Position) {
-    return new Position(avg(this.x, other.x), avg(this.y, other.y), avg(this.z, other.z));
+    return new Position(
+      avg(this.x, other.x),
+      avg(this.y, other.y),
+      avg(this.z, other.z)
+    );
   }
 
   public toString(): string {
@@ -75,7 +83,12 @@ class Position {
 }
 
 class Nanobot extends Position {
-  public constructor(public x: number, public y: number, public z: number, public radius: number) {
+  public constructor(
+    public x: number,
+    public y: number,
+    public z: number,
+    public radius: number
+  ) {
     super(x, y, z);
   }
 
@@ -100,10 +113,7 @@ let b: Nanobot;
 // let maxZ = 0;
 
 for (let line of lines) {
-  line = line
-    .replace("pos=<", "")
-    .replace(">", "")
-    .replace(" r=", "");
+  line = line.replace("pos=<", "").replace(">", "").replace(" r=", "");
   const [x, y, z, radius] = line.split(",").map((value) => parseInt(value, 10));
   const bot = new Nanobot(x, y, z, radius);
   bots.push(bot);
@@ -169,12 +179,16 @@ while (gen < 10000000) {
   const keep = Math.ceil(populationSize * populationKeep);
   const cross = Math.ceil(populationSize * populationCross);
   let shortlist = population
-    .sort((a: Position, b: Position) => (b.score === a.score ? a.nearest - b.nearest : b.score - a.score))
+    .sort((a: Position, b: Position) =>
+      b.score === a.score ? a.nearest - b.nearest : b.score - a.score
+    )
     .slice(0, keep);
   const next: Position[] = [];
 
   const fittest = shortlist[0];
-  console.log(`Fittest ${fittest}   ${fittest.nearest}   ${fittest.dist(0, 0, 0)}`);
+  console.log(
+    `Fittest ${fittest}   ${fittest.nearest}   ${fittest.dist(0, 0, 0)}`
+  );
   for (let i = 0; i < gen % 100; i++) {
     next.push(fittest.mutate(fittest.nearest));
   }

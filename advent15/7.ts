@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 import { isNumber } from "util";
 const input = fs.readFileSync("input7.txt", "utf8");

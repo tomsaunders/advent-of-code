@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 import { Grid } from "./grid";
 import { Cell } from "./cell";
@@ -116,8 +116,8 @@ function portal(input: string): number {
     }
   }
   // map.draw();
-  const start = map.cells.find(c => c.portalCode === "AA") as Cell;
-  const final = map.cells.find(c => c.portalCode === "ZZ") as Cell;
+  const start = map.cells.find((c) => c.portalCode === "AA") as Cell;
+  const final = map.cells.find((c) => c.portalCode === "ZZ") as Cell;
   return map.shortestPath(start, final);
 }
 
@@ -133,8 +133,8 @@ function portal2(input: string): number {
     }
   }
   map.makeRecursive();
-  const start = map.cells.find(c => c.portalCode === "AA") as Cell;
-  const final = map.cells.find(c => c.portalCode === "ZZ") as Cell;
+  const start = map.cells.find((c) => c.portalCode === "AA") as Cell;
+  const final = map.cells.find((c) => c.portalCode === "ZZ") as Cell;
   return map.shortestPortalPath(start, final);
 }
 

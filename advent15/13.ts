@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env ts-node
 import * as fs from "fs";
 const input = fs.readFileSync("input13.txt", "utf8");
 function test(a: any, b: any): void {
@@ -37,7 +37,7 @@ const names = [
   "Eric",
   "Frank",
   "George",
-  "Mallory"
+  "Mallory",
 ];
 const testNames = names.slice(0, 4);
 const test1 = `Alice would gain 54 happiness units by sitting next to Bob.
@@ -55,7 +55,7 @@ David would gain 41 happiness units by sitting next to Carol.`;
 
 function happyMap(input: string): Map<string, number> {
   const m = new Map<string, number>();
-  input.split("\n").forEach(line => {
+  input.split("\n").forEach((line) => {
     const bits = line
       .replace("would ", "")
       .replace("happiness units by sitting next to ", "")
