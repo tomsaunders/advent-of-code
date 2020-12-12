@@ -1,1 +1,0 @@
-{"version":3,"file":"15.js","sourceRoot":"","sources":["../15.ts"],"names":[],"mappings":";;;AACA,uBAAyB;AACzB,IAAM,KAAK,GAAG,EAAE,CAAC,YAAY,CAAC,aAAa,EAAE,MAAM,CAAC,CAAC","sourcesContent":["#!/usr/bin/env npx ts-node\nimport * as fs from \"fs\";\nconst input = fs.readFileSync(\"input15.txt\", \"utf8\");\n"]}
