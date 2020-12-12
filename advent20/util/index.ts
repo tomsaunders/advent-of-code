@@ -1,3 +1,12 @@
+export { Grid } from "./grid";
+import { Cell } from "./cell";
+export { Cell } from "./cell";
+
+export const WALL: string = "#";
+export const SPACE: string = ".";
+export const ON: string = "#";
+export const OFF: string = ".";
+
 export const RED: string = "\x1b[31m";
 export const GREEN: string = "\x1b[32m";
 export const YELLOW: string = "\x1b[33m";
