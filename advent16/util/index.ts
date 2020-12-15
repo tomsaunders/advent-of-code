@@ -28,3 +28,7 @@ export function arrSum(arr: number[]): number {
 export function arrProd(arr: number[]): number {
   return arr.reduce((a, b) => a * b, 1);
 }
+
+import * as crypto from "crypto";
+export const md5 = (contents: string) =>
+  crypto.createHash("md5").update(contents).digest("hex");
