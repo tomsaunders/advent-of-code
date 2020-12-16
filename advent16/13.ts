@@ -19,7 +19,7 @@ function makeGrid(seed: number, range: number): Grid {
   const grid = new Grid();
   for (let y = 0; y < range; y++) {
     for (let x = 0; x < range; x++) {
-      grid.addCell(x, y, 0, cell(x, y));
+      grid.createCell(x, y, 0, cell(x, y));
     }
   }
   return grid;

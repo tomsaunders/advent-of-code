@@ -17,18 +17,21 @@ export class Grid {
     return Array.from(this.lookup.values());
   }
 
-  public addCell(
+  public createCell(
     x: number,
     y: number,
     z: number,
     type: string
   ): Cell | undefined {
-    const c = new Cell(this, x, y, z, type);
+    return this.addCell(new Cell(this, x, y, z, type));
+  }
+
+  public addCell(c: Cell): Cell | undefined {
     this.lookup.set(c.coord, c);
-    this.minY = Math.min(this.minY, y);
-    this.minX = Math.min(this.minX, x);
-    this.maxY = Math.max(this.maxY, y);
-    this.maxX = Math.max(this.maxX, x);
+    this.minY = Math.min(this.minY, c.y);
+    this.minX = Math.min(this.minX, c.x);
+    this.maxY = Math.max(this.maxY, c.y);
+    this.maxX = Math.max(this.maxX, c.x);
 
     return c;
   }
@@ -38,7 +41,7 @@ export class Grid {
   }
 
   public init(): this {
-    this.cells.forEach(c => c.init());
+    this.cells.forEach((c) => c.init());
     return this;
   }
 
@@ -73,7 +76,7 @@ export class Grid {
   }
 
   public shortestPath(from: Cell, to: Cell): number {
-    let unvisitedSet: Cell[] = Array.from(this.lookup.values()).map(c => {
+    let unvisitedSet: Cell[] = Array.from(this.lookup.values()).map((c) => {
       c.init();
       return c;
     });
