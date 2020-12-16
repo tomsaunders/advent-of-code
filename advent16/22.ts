@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 import * as fs from "fs";
-import { test, Grid, Cell, SPACE } from "./util";
+import { test, Grid, Cell, SPACE, YELLOW, RESET, GREEN, RED } from "./util";
 
 const input = fs.readFileSync("input22.txt", "utf8");
 const lines = input.split("\n");
@@ -15,7 +15,7 @@ class Node extends Cell {
     public size: number,
     public used: number
   ) {
-    super(grid, x, y, 1, SPACE);
+    super(grid, x, y, 0, SPACE);
   }
 
   public get empty(): boolean {
@@ -24,6 +24,19 @@ class Node extends Cell {
 
   public get avail(): number {
     return this.size - this.used;
+  }
+
+  public get code(): string {
+    if (this.empty) {
+      return `${GREEN}    0${RESET}`;
+    }
+    if (this.size > 400) {
+      return `${RED}    #${RESET}`;
+    }
+    if (this.x === 29 && this.y === 0) {
+      return `${YELLOW}${this.size.toString(10).padStart(5, " ")}${RESET}`;
+    }
+    return this.avail.toString(10).padStart(5, " ");
   }
 
   public print(): string {
@@ -67,25 +80,13 @@ for (let a = 0; a < cells.length; a++) {
   }
 }
 
-// const viable = grid.cells.reduce((carry: number, cell: Cell): number => {
-//   const node = cell as Node;
-//   if (node.empty) {
-//     return carry;
-//   }
-//   let v = 0;
-//   for (const n of node.neighbours) {
-//     const a = (n as Node).avail;
-//     if (a > node.used) {
-//       console.log(
-//         "node",
-//         node.print(),
-//         " can go to neighbour",
-//         (n as Node).print()
-//       );
-//       v++;
-//     }
-//   }
-
-//   return carry + v;
-// }, 0);
 console.log("Part One", viable);
+grid.draw();
+console.log("Part Two", 4 + 25 + 28 + 28 * 5 + 1);
+// The ~500 size cells are effectively walls.
+// The game is to get the empty cell next to the goal cell, then 'leap-frog' it to the destination
+// It takes 4 (left), 25 (up), 28 (right) moves to get the empty around the wall and to the goal
+// It takes 5 moves for each sequence of leap frog
+// It takes a final move to get the goal to the destination (the leap frog can be omitted for the final step)
+// Lesson: every pair from part one actually joined the empty cell.
+// It can be good to print the output to verify that
