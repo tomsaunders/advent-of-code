@@ -8,6 +8,8 @@ export class Grid {
   public minX: number = 0;
   public maxY: number = 0;
   public maxX: number = 0;
+  public minZ: number = 0;
+  public maxZ: number = 0;
   public _cells: Cell[][] = [];
   constructor() {
     this.lookup = new Map<string, Cell>();
@@ -32,12 +34,18 @@ export class Grid {
     this.minX = Math.min(this.minX, c.x);
     this.maxY = Math.max(this.maxY, c.y);
     this.maxX = Math.max(this.maxX, c.x);
+    this.minZ = Math.min(this.minZ, c.z);
+    this.maxZ = Math.max(this.maxZ, c.z);
 
     return c;
   }
 
-  public getCell(x: number, y: number, z: number = 0) {
-    return this.getByCoord(`${x}:${y}:${z}`);
+  public getCell(x: number, y: number, z: number = 0, createIfNot = false) {
+    const c = this.getByCoord(`${x}:${y}:${z}`);
+    if (!c) {
+      return this.createCell(x, y, z, ".");
+    }
+    return c;
   }
 
   public getByCoord(coord: string) {
@@ -49,33 +57,41 @@ export class Grid {
     return this;
   }
 
-  public draw(): void {
+  public draw(z: number = 0, drawCoords: boolean = true): void {
     const YELLOW: string = "\x1b[33m";
     const RESET: string = "\x1b[0m";
 
-    const z = 0;
-    let xRow = `${YELLOW}   `;
-    for (let x = this.minX; x <= this.maxX; x++) {
-      xRow += x % 10 === 0 ? Math.round(x / 10) : " ";
+    if (drawCoords) {
+      let xRow = `${YELLOW}   `;
+      for (let x = this.minX; x <= this.maxX; x++) {
+        xRow += x % 10 === 0 ? Math.round(x / 10) : " ";
+      }
+      xRow = `${xRow}${RESET}`;
+      console.log(xRow);
+      xRow = `${YELLOW}   `;
+      for (let x = this.minX; x <= this.maxX; x++) {
+        xRow += x % 10;
+      }
+      xRow = `${xRow}${RESET}`;
+      console.log(xRow);
     }
-    xRow = `${xRow}${RESET}`;
-    console.log(xRow);
-    xRow = `${YELLOW}   `;
-    for (let x = this.minX; x <= this.maxX; x++) {
-      xRow += x % 10;
-    }
-    xRow = `${xRow}${RESET}`;
-    console.log(xRow);
 
     for (let y = this.minY; y <= this.maxY; y++) {
       const yPos = y < 10 ? `0${y}` : `${y}`;
-      let line = `${YELLOW}${yPos}${RESET} `;
+      let line = drawCoords ? `${YELLOW}${yPos}${RESET} ` : "";
       for (let x = this.minX; x <= this.maxX; x++) {
         const c = `${x}:${y}:${z}`;
         const cell = this.lookup.get(c);
         line += cell ? cell.code : " ";
       }
       console.log(line);
+    }
+  }
+
+  public drawAll(drawCoords: boolean = true): void {
+    for (let i = this.minZ; i <= this.maxZ; i++) {
+      console.log("z=", i);
+      this.draw(i, drawCoords);
     }
   }
 
