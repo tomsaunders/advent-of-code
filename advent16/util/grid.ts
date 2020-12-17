@@ -75,6 +75,18 @@ export class Grid {
     }
   }
 
+  public static fromLines(input: string | string[]): Grid {
+    const lines = Array.isArray(input) ? input : input.split("\n");
+
+    const g = new Grid();
+    for (let y = 0; y < lines.length; y++) {
+      for (let x = 0; x < lines[y].length; x++) {
+        g.createCell(x, y, 0, lines[y][x]);
+      }
+    }
+    return g.init();
+  }
+
   public shortestPath(from: Cell, to: Cell): number {
     let unvisitedSet: Cell[] = Array.from(this.lookup.values()).map((c) => {
       c.init();
@@ -82,15 +94,17 @@ export class Grid {
     });
     from.tentativeDist = 0;
     let c: Cell = from;
-
+    console.log("from c", c.x, c.y, unvisitedSet.length);
     while (!to.visited && unvisitedSet.length) {
       const d = c.tentativeDist + 1;
       for (const n of c.neighbours) {
         n.tentativeDist = Math.min(d, n.tentativeDist);
+        console.log("n ", n.x, n.y, " is ", n.tentativeDist);
       }
       c.visited = true;
       unvisitedSet.sort((a, b) => b.tentativeDist - a.tentativeDist);
       c = unvisitedSet.pop() as Cell;
+      console.log("from c", c.x, c.y, unvisitedSet.length);
     }
     return to.tentativeDist;
   }

@@ -32,3 +32,15 @@ export function arrProd(arr: number[]): number {
 import * as crypto from "crypto";
 export const md5 = (contents: string) =>
   crypto.createHash("md5").update(contents).digest("hex");
+
+export function permute(all: any[][], options: any[], progress: any[]) {
+  if (options.length === 0) {
+    all.push(progress);
+  }
+  for (let i = 0; i < options.length; i++) {
+    const branch = [...progress, options[i]];
+    const rest = [...options];
+    rest.splice(i, 1);
+    permute(all, rest, branch);
+  }
+}
