@@ -25,7 +25,7 @@ export class Cell {
     this.east = this.grid.getCell(this.x + 1, this.y, this.z);
     this.west = this.grid.getCell(this.x - 1, this.y, this.z);
     this.neighbours = [this.north, this.south, this.east, this.west].filter(
-      c => !!c && c.isSpace
+      (c) => !!c && !c.isWall
     ) as Cell[];
     this.knownDistances = [];
     this.reset();
@@ -52,7 +52,7 @@ export class Cell {
   }
 
   public get unexplored(): Cell[] {
-    return this.neighbours.filter(n => !n.visited);
+    return this.neighbours.filter((n) => !n.visited);
   }
 
   public get code(): string {
