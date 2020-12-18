@@ -35,15 +35,30 @@ class Game {
   constructor(state: GameState) {
     this.elevator = state.e;
     this.map = new Map<string, Device>();
-    this.floors = state.f.map((devices: string): Device[] =>
-      devices.split(",").map((id) => Device.init(id.trim(), this))
+    this.floors = state.f.map((devices: string, i): Device[] =>
+      devices.split(",").map((id) => Device.init(id.trim(), i, this))
     );
+  }
+  refloor(): Game {
+    this.floors = [[], [], [], []];
+    Array.from(this.map.values()).forEach((d) => {
+      if (!this.floors[d.floor]) {
+        console.error("WTF");
+        console.log(d);
+      }
+      this.floors[d.floor].push(d);
+    });
+    return this;
   }
   toJSON(): GameState {
     return {
       e: this.elevator,
-      f: this.floors.map((devices: Device[]): string =>
-        devices.map((d) => d.id).join(",")
+      f: this.floors.slice().map((devices: Device[]): string =>
+        devices
+          .slice()
+          .map((d) => d.id)
+          .sort()
+          .join(",")
       ),
     };
   }
@@ -63,10 +78,17 @@ class Game {
     }
 
     if (this.elevator !== 0) {
-      options.push(-1);
+      if (this.elevator === 1 && this.floors[0].length === 0) {
+        // do nothing
+      } else {
+        options.push(-1);
+      }
     }
 
     return options;
+  }
+  get deviceOptions(): Device[] {
+    return this.floors[this.elevator];
   }
 
   get score(): number {
@@ -87,18 +109,17 @@ class Game {
 }
 
 class Device {
-  constructor(public id: string, protected game: Game) {
+  constructor(public id: string, public floor: number, protected game: Game) {
     game.map.set(id, this);
   }
-  public floor: number = 0;
   public get code(): string {
     return this.id[0];
   }
-  static init(key: string, game: Game): Device {
+  static init(key: string, floor: number, game: Game): Device {
     if (key.endsWith("M")) {
-      return new Chip(key, game);
+      return new Chip(key, floor, game);
     } else {
-      return new Gen(key, game);
+      return new Gen(key, floor, game);
     }
   }
 }
@@ -118,7 +139,83 @@ class Gen extends Device {
 }
 
 const g = new Game(testState);
-console.log(g, JSON.stringify(g), g.valid, g.score);
+
+type Branch = [GameState, number, number];
+function gameLoop(start: GameState) {
+  const queue: Branch[] = [[start, 0, 99999]];
+
+  const seen: Map<string, number> = new Map<string, number>();
+
+  let minSteps = 999999;
+  let x = 0;
+  while (queue.length) {
+    x++;
+    const [state, steps, score] = queue.pop() as Branch;
+    if (steps > minSteps) {
+      continue;
+    }
+    const game = new Game(state);
+    if (game.win) {
+      minSteps = Math.min(steps, minSteps);
+      console.log("winning!", steps, game.toJSON());
+      continue;
+    }
+
+    if (!game.valid) {
+      continue;
+    }
+
+    if (queue.length % 1000 === 0)
+      console.log(
+        "steps",
+        steps,
+        game.toJSON(),
+        "score",
+        score,
+        "queue",
+        queue.length,
+        "seen",
+        seen.size,
+        "x",
+        x
+      );
+
+    for (const dE of game.elevatorOptions) {
+      for (const a of game.deviceOptions) {
+        for (const b of game.deviceOptions) {
+          const branch = new Game(state);
+          branch.elevator += dE;
+          branch.map.get(a.id)!.floor = branch.elevator;
+          if (a !== b) {
+            branch.map.get(b.id)!.floor = branch.elevator;
+          }
+          const j = branch.refloor().toJSON();
+          const k = JSON.stringify(j);
+          if (seen.has(k)) {
+            const s = seen.get(k) as number;
+            if (s <= steps + 1) {
+              // been here before for cheaper
+              continue;
+            }
+          } else {
+            seen.set(k, steps + 1);
+            queue.push([j, steps + 1, branch.score]);
+          }
+        }
+      }
+    }
+    queue.sort((a, b) => b[2] - a[2]);
+  }
+  return minSteps;
+}
+test(gameLoop(testState), 11);
+console.log(gameLoop(inputState));
+
+const inputState2: GameState = {
+  e: 0,
+  f: ["1G, 2G, 2M, 3G, 4G, 4M, 5G, 5M, 6G, 6M, 7G, 7M", "1M, 3M", "", ""],
+};
+console.log(gameLoop(inputState2));
 
 // goal - get everything to the fourth floor
 // elevator starts on the first floor and can carry at most two things
