@@ -42,10 +42,6 @@ class Game {
   refloor(): Game {
     this.floors = [[], [], [], []];
     Array.from(this.map.values()).forEach((d) => {
-      if (!this.floors[d.floor]) {
-        console.error("WTF");
-        console.log(d);
-      }
       this.floors[d.floor].push(d);
     });
     return this;
@@ -80,7 +76,14 @@ class Game {
     if (this.elevator !== 0) {
       if (this.elevator === 1 && this.floors[0].length === 0) {
         // do nothing
+      } else if (
+        this.elevator === 2 &&
+        this.floors[0].length === 0 &&
+        this.floors[1].length === 0
+      ) {
+        // do nothing
       } else {
+        // at least one thing is below, so going down is required.
         options.push(-1);
       }
     }
@@ -94,7 +97,7 @@ class Game {
   get score(): number {
     return arrProd(
       this.floors.map((devices: Device[]) =>
-        arrProd(devices.map((d) => 4 - d.floor))
+        arrSum(devices.map((d) => 4 - d.floor))
       )
     );
   }
@@ -105,6 +108,17 @@ class Game {
       this.elevator === 3 &&
       this.floors[3].length === this.map.size
     );
+  }
+
+  get state(): string {
+    const pairs = (Array.from(this.map.values()).filter(
+      (x) => x instanceof Chip
+    ) as Chip[])
+      .map((x) => x.state)
+      .sort()
+      .reverse()
+      .join("-");
+    return `${this.elevator}e${pairs}`;
   }
 }
 
@@ -131,6 +145,9 @@ class Chip extends Device {
     const gen = this.gen;
     return gen.floor === this.floor;
   }
+  public get state(): string {
+    return `${this.floor}${this.gen.floor}`;
+  }
 }
 class Gen extends Device {
   public get chip(): Gen {
@@ -143,8 +160,7 @@ const g = new Game(testState);
 type Branch = [GameState, number, number];
 function gameLoop(start: GameState) {
   const queue: Branch[] = [[start, 0, 99999]];
-
-  const seen: Map<string, number> = new Map<string, number>();
+  const seen: Set<string> = new Set<string>();
 
   let minSteps = 999999;
   let x = 0;
@@ -190,15 +206,10 @@ function gameLoop(start: GameState) {
             branch.map.get(b.id)!.floor = branch.elevator;
           }
           const j = branch.refloor().toJSON();
-          const k = JSON.stringify(j);
-          if (seen.has(k)) {
-            const s = seen.get(k) as number;
-            if (s <= steps + 1) {
-              // been here before for cheaper
-              continue;
-            }
-          } else {
-            seen.set(k, steps + 1);
+          const k = branch.state;
+          console.log(j, k);
+          if (!seen.has(k)) {
+            seen.add(k);
             queue.push([j, steps + 1, branch.score]);
           }
         }
@@ -209,13 +220,14 @@ function gameLoop(start: GameState) {
   return minSteps;
 }
 test(gameLoop(testState), 11);
-console.log(gameLoop(inputState));
+// console.log(gameLoop(inputState));
+// test(gameLoop(inputState), 47);
 
 const inputState2: GameState = {
   e: 0,
   f: ["1G, 2G, 2M, 3G, 4G, 4M, 5G, 5M, 6G, 6M, 7G, 7M", "1M, 3M", "", ""],
 };
-console.log(gameLoop(inputState2));
+// console.log(gameLoop(inputState2));
 
 // goal - get everything to the fourth floor
 // elevator starts on the first floor and can carry at most two things
