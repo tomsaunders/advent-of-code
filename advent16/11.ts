@@ -31,25 +31,25 @@ const testState: GameState = {
 class Game {
   public elevator: number;
   public map: Map<string, Device>;
-  public floors: Device[][] = [];
   constructor(state: GameState) {
     this.elevator = state.e;
     this.map = new Map<string, Device>();
-    this.floors = state.f.map((devices: string, i): Device[] =>
-      devices.split(",").map((id) => Device.init(id.trim(), i, this))
+    state.f.map((devices: string, i): Device[] =>
+      devices
+        .split(",")
+        .filter((x) => !!x)
+        .map((id) => Device.init(id.trim(), i, this))
     );
   }
-  refloor(): Game {
-    this.floors = [[], [], [], []];
-    Array.from(this.map.values()).forEach((d) => {
-      this.floors[d.floor].push(d);
-    });
-    return this;
-  }
   toJSON(): GameState {
+    const f: Device[][] = [[], [], [], []];
+    Array.from(this.map.values()).forEach((d) => {
+      f[d.floor].push(d);
+    });
+
     return {
       e: this.elevator,
-      f: this.floors.slice().map((devices: Device[]): string =>
+      f: f.map((devices: Device[]): string =>
         devices
           .slice()
           .map((d) => d.id)
@@ -59,7 +59,11 @@ class Game {
     };
   }
   get valid(): boolean {
-    return this.floors.every((floor: Device[]) => {
+    const f: Device[][] = [[], [], [], []];
+    Array.from(this.map.values()).forEach((d) => {
+      f[d.floor].push(d);
+    });
+    return f.every((floor: Device[]) => {
       const containsGenerator = !!floor.find((d) => d instanceof Gen);
       const containsUnshielded = !!floor.find(
         (d) => d instanceof Chip && !d.isShielded
@@ -74,13 +78,13 @@ class Game {
     }
 
     if (this.elevator !== 0) {
-      if (this.elevator === 1 && this.floors[0].length === 0) {
+      const floor0 = Array.from(this.map.values()).filter((d) => d.floor === 0)
+        .length;
+      const floor1 = Array.from(this.map.values()).filter((d) => d.floor === 1)
+        .length;
+      if (this.elevator === 1 && floor0 === 0) {
         // do nothing
-      } else if (
-        this.elevator === 2 &&
-        this.floors[0].length === 0 &&
-        this.floors[1].length === 0
-      ) {
+      } else if (this.elevator === 2 && floor0 === 0 && floor1 === 0) {
         // do nothing
       } else {
         // at least one thing is below, so going down is required.
@@ -91,14 +95,8 @@ class Game {
     return options;
   }
   get deviceOptions(): Device[] {
-    return this.floors[this.elevator];
-  }
-
-  get score(): number {
-    return arrProd(
-      this.floors.map((devices: Device[]) =>
-        arrSum(devices.map((d) => 4 - d.floor))
-      )
+    return Array.from(this.map.values()).filter(
+      (d) => d.floor === this.elevator
     );
   }
 
@@ -106,7 +104,7 @@ class Game {
     return (
       this.valid &&
       this.elevator === 3 &&
-      this.floors[3].length === this.map.size
+      Array.from(this.map.values()).every((d) => d.floor === 3)
     );
   }
 
@@ -116,7 +114,6 @@ class Game {
     ) as Chip[])
       .map((x) => x.state)
       .sort()
-      .reverse()
       .join("-");
     return `${this.elevator}e${pairs}`;
   }
@@ -157,44 +154,32 @@ class Gen extends Device {
 
 const g = new Game(testState);
 
-type Branch = [GameState, number, number];
+type Branch = [GameState, number];
 function gameLoop(start: GameState) {
-  const queue: Branch[] = [[start, 0, 99999]];
+  const queue: Branch[] = [[start, 0]];
   const seen: Set<string> = new Set<string>();
 
   let minSteps = 999999;
   let x = 0;
-  while (queue.length) {
+  while (queue.length && x < 100000) {
     x++;
-    const [state, steps, score] = queue.pop() as Branch;
+    const [state, steps] = queue.pop() as Branch;
+
     if (steps > minSteps) {
+      // console.log("aborting for steps");
       continue;
     }
+
     const game = new Game(state);
+
     if (game.win) {
       minSteps = Math.min(steps, minSteps);
-      console.log("winning!", steps, game.toJSON());
       continue;
     }
 
     if (!game.valid) {
       continue;
     }
-
-    if (queue.length % 1000 === 0)
-      console.log(
-        "steps",
-        steps,
-        game.toJSON(),
-        "score",
-        score,
-        "queue",
-        queue.length,
-        "seen",
-        seen.size,
-        "x",
-        x
-      );
 
     for (const dE of game.elevatorOptions) {
       for (const a of game.deviceOptions) {
@@ -205,38 +190,24 @@ function gameLoop(start: GameState) {
           if (a !== b) {
             branch.map.get(b.id)!.floor = branch.elevator;
           }
-          const j = branch.refloor().toJSON();
+          const j = branch.toJSON();
           const k = branch.state;
-          console.log(j, k);
           if (!seen.has(k)) {
             seen.add(k);
-            queue.push([j, steps + 1, branch.score]);
+            queue.push([j, steps + 1]);
           }
         }
       }
     }
-    queue.sort((a, b) => b[2] - a[2]);
+    queue.sort((a, b) => b[1] - a[1]);
   }
   return minSteps;
 }
 test(gameLoop(testState), 11);
-// console.log(gameLoop(inputState));
-// test(gameLoop(inputState), 47);
+console.log("Part One", gameLoop(inputState));
 
 const inputState2: GameState = {
   e: 0,
   f: ["1G, 2G, 2M, 3G, 4G, 4M, 5G, 5M, 6G, 6M, 7G, 7M", "1M, 3M", "", ""],
 };
-// console.log(gameLoop(inputState2));
-
-// goal - get everything to the fourth floor
-// elevator starts on the first floor and can carry at most two things
-// if a microchip is on the same level as a generator without being protected by its own, dead
-
-// for each move,
-// what gets off the elevator (everything)
-// what gets on the elevator (1-2 items)
-// does the elevator go up or down
-// is the game left in a valid state
-// goal alg - what is the distance for each component to the goal
-// then, what is the fewest steps
+console.log("Part Two", gameLoop(inputState2));
