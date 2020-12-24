@@ -55,6 +55,17 @@ export class Cell {
     this.reset();
   }
 
+  public get hexNeighbours(): Cell[] {
+    return [
+      this.grid.getCell(this.x + 1, this.y - 1, this.z, true), //e
+      this.grid.getCell(this.x - 1, this.y + 1, this.z, true), //w
+      this.grid.getCell(this.x + 1, this.y, this.z - 1, true), //ne
+      this.grid.getCell(this.x, this.y + 1, this.z - 1, true), //nw
+      this.grid.getCell(this.x, this.y - 1, this.z + 1, true), //se
+      this.grid.getCell(this.x - 1, this.y, this.z + 1, true), //sw
+    ] as Cell[];
+  }
+
   public reset(): void {
     this.visited = false;
     this.tentativeDist = 9999;
@@ -110,6 +121,11 @@ export class Cell {
 
   public get isOff(): boolean {
     return this.type === OFF;
+  }
+
+  public toggle(): this {
+    this.type = this.type === ON ? OFF : ON;
+    return this;
   }
 
   public get isIntersection(): boolean {

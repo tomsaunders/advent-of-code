@@ -42,7 +42,7 @@ export class Grid {
 
   public getCell(x: number, y: number, z: number = 0, createIfNot = false) {
     const c = this.getByCoord(`${x}:${y}:${z}`);
-    if (!c) {
+    if (!c && createIfNot) {
       return this.createCell(x, y, z, ".");
     }
     return c;
