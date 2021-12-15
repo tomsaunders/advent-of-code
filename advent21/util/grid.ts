@@ -96,16 +96,13 @@ export class Grid {
   }
 
   public shortestPath(from: Cell, to: Cell): number {
-    let unvisitedSet: Cell[] = Array.from(this.lookup.values()).map((c) => {
-      c.init();
-      return c;
-    });
+    let unvisitedSet: Cell[] = this.cells.slice(0);
     from.tentativeDist = 0;
     let c: Cell = from;
 
     while (!to.visited && unvisitedSet.length) {
-      const d = c.tentativeDist + 1;
       for (const n of c.openNeighbours) {
+        const d = c.tentativeDist + n.cost;
         n.tentativeDist = Math.min(d, n.tentativeDist);
       }
       c.visited = true;
@@ -113,6 +110,55 @@ export class Grid {
       c = unvisitedSet.pop() as Cell;
     }
     return to.tentativeDist;
+  }
+
+  public aStar(from: Cell, to: Cell): Cell[] {
+    let openSet: Cell[] = [from];
+    // tentative dist is the shortest known distance from 'from' to a cell. 0 at start.
+    from.tentativeDist = 0;
+
+    // use manhattan distance as heuristic
+    const h = (c: Cell) => Math.abs(to.x - c.x) + Math.abs(to.y - c.y) + c.cost;
+    // guess dist is the estimated cost of going start to end via this. The more accurate the estimate, the faster the path will be found
+    from.guessDist = h(from);
+
+    // For node n, cameFrom[n] is the node immediately preceding it on the cheapest path from start
+    // to n currently known.
+    const cameFrom: Map<Cell, Cell> = new Map<Cell, Cell>();
+
+    const reconstructPath = (start: Cell): Cell[] => {
+      const path = [start];
+      let c = start;
+      while (c !== from) {
+        c = cameFrom.get(c) as Cell;
+        path.unshift(c);
+      }
+      return path;
+    };
+
+    while (openSet.length) {
+      const current = openSet.pop() as Cell;
+      if (current === to) {
+        return reconstructPath(current);
+      }
+
+      for (const n of current.directNeighbours) {
+        const tentativeGScore = current.tentativeDist + n.int;
+        const gScore = n.tentativeDist || 9999;
+        if (tentativeGScore < gScore) {
+          cameFrom.set(n, current);
+          n.tentativeDist = tentativeGScore;
+          n.guessDist = tentativeGScore + h(n);
+          if (!openSet.includes(n)) {
+            openSet.push(n);
+          }
+        }
+      }
+      openSet.sort((a, b) => b.guessDist - a.guessDist);
+    }
+
+    // Open set is empty but goal was never reached
+    return [];
   }
 
   public static fromLines(input: string | string[]): Grid {
