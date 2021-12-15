@@ -13,7 +13,9 @@ export class Cell {
 
   public visited = false;
   public tentativeDist = 9999;
+  public guessDist = 9999;
   public knownDistances: [Cell, number][] = [];
+  public cost: number = 1;
 
   public north?: Cell;
   public south?: Cell;
@@ -130,6 +132,10 @@ export class Cell {
 
   public get isIntersection(): boolean {
     return this.openNeighbours.length > 2 && this.isSpace;
+  }
+
+  public get int(): number {
+    return parseInt(this.type, 10);
   }
 
   public clone(): Cell {
