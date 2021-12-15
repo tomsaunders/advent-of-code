@@ -1,11 +1,16 @@
 #!/usr/bin/env ts-node
 import * as fs from "fs";
-const input = fs.readFileSync("input5.txt", "utf8");
-const test = fs.readFileSync("test5.txt", "utf8");
+const input = fs.readFileSync("inputX.txt", "utf8");
+const test = fs.readFileSync("testX.txt", "utf8");
 
 function part1(input: string): number {
   const lines = input.split("\n");
-  const numbers = lines.shift()?.split(",");
+  const numbers = lines.map((l) => parseInt(l, 10));
+
+  lines.forEach((l) => {
+    const [left, right] = l.split(" | ");
+    const bits = right.split(" ");
+  });
 
   return 0;
 }
@@ -19,7 +24,12 @@ if (t1 === 1) {
 
 function part2(input: string): number {
   const lines = input.split("\n");
-  const numbers = lines.shift()?.split(",");
+  const numbers = lines.map((l) => parseInt(l, 10));
+
+  lines.forEach((l) => {
+    const [left, right] = l.split(" | ");
+    const bits = right.split(" ");
+  });
 
   return 0;
 }
