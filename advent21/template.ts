@@ -1,5 +1,6 @@
 #!/usr/bin/env ts-node
 import * as fs from "fs";
+import { Grid, Cell } from './util';
 const input = fs.readFileSync("inputX.txt", "utf8");
 const test = fs.readFileSync("testX.txt", "utf8");
 
@@ -23,13 +24,7 @@ if (t1 === 1) {
 }
 
 function part2(input: string): number {
-  const lines = input.split("\n");
-  const numbers = lines.map((l) => parseInt(l, 10));
-
-  lines.forEach((l) => {
-    const [left, right] = l.split(" | ");
-    const bits = right.split(" ");
-  });
+  const lines = input.split("\n") ;
 
   return 0;
 }
