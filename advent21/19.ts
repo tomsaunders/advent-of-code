@@ -3,6 +3,38 @@ import * as fs from "fs";
 const input = fs.readFileSync("input19.txt", "utf8");
 const test = fs.readFileSync("test19.txt", "utf8");
 
+/*
+x y z
+x z y
+x -y z
+x -z -y
+
+-x y z
+-x -z y
+-x -y -z
+-x z -y
+
+z -y -x
+z x -y
+z y x
+z -x y
+
+-z -x -y
+-z y -x
+-z x y
+-z -y x
+
+-y z x
+-y -x z
+-y -z -x
+-y x -z
+
+y z -x
+y x z
+y -z x
+y -x -z
+*/
+
 class Probe {
   public scanX: number;
   public scanY: number;
@@ -56,6 +88,14 @@ function part1(input: string): number {
       scanner.addProbe(l);
     }
   });
+
+  const knownScanners: Scanner[] = [scanners.shift() as Scanner];
+  // foreach unknown U
+  //// foreach known to find the pair K
+  ////// foreach orientation of coordinates
+  //////// foreach known probe KP calculate the
+
+  //////// foreach unknown probe UP
 
   return 0;
 }
