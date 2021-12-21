@@ -77,6 +77,10 @@ export class Cell {
     return `${this.x}:${this.y}:${this.z}`;
   }
 
+  public get xy(): string {
+    return `${this.x}, ${this.y}`;
+  }
+
   public get label(): string {
     return `${this.code} @ ${this.coord}`;
   }
