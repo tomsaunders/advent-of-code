@@ -4,38 +4,43 @@ const input = fs.readFileSync("input19.txt", "utf8");
 const test = fs.readFileSync("test19.txt", "utf8");
 
 /*
-x y z
-x z y
-x -y z
-x -z -y
-
--x y z
--x -z y
--x -y -z
--x z -y
-
-z -y -x
-z x -y
-z y x
-z -x y
-
--z -x -y
--z y -x
--z x y
--z -y x
-
--y z x
--y -x z
--y -z -x
--y x -z
-
-y z -x
-y x z
-y -z x
-y -x -z
+ABC xyz DEF -x -y -z
 */
+type PCoord = "A" | "B" | "C" | "D" | "E" | "F";
+type PCoordSet = [PCoord, PCoord, PCoord];
+type Coord = [number, number, number];
+const permutations: PCoordSet[] = `A B C
+A C E
+A E F
+A F B
+D B F
+D F E
+D E C
+D C B
+C B D
+C D E
+C E A
+C A B
+F B A
+F A E
+F E D
+F D B
+E D F
+E F A
+E A C
+E C D
+B D C
+B C A
+B A F
+B F D`
+  .split("\n")
+  .map((p) => p.split(" ") as PCoordSet);
 
-class Probe {
+class Beacon {
+  public x: number = Infinity;
+  public y: number = Infinity;
+  public z: number = Infinity;
+
   public scanX: number;
   public scanY: number;
   public scanZ: number;
@@ -45,37 +50,112 @@ class Probe {
       .map((x) => parseInt(x, 10));
   }
 
-  public get absX(): number {
-    return this.scanX + this.scanner.x;
+  public get scanCoord(): string {
+    return `${this.scanX},${this.scanY},${this.scanZ}`;
   }
 
-  public get absY(): number {
-    return this.scanY + this.scanner.y;
+  public get label(): string {
+    return `${this.x},${this.y},${this.z}`;
   }
 
-  public get absZ(): number {
-    return this.scanZ + this.scanner.z;
+  public get coord(): Coord {
+    return [this.x, this.y, this.z];
   }
 
-  public get absCoord(): string {
-    return `${this.absX},${this.absY},${this.absZ};`;
+  public permuteCoord(permutation: PCoordSet): Coord {
+    return permutation.map((p) => {
+      switch (p) {
+        case "A":
+          return this.scanX;
+        case "B":
+          return this.scanY;
+        case "C":
+          return this.scanZ;
+        case "D":
+          return -this.scanX;
+        case "E":
+          return -this.scanY;
+        case "F":
+          return -this.scanZ;
+      }
+    }) as Coord;
   }
 }
 
 class Scanner {
-  public probes: Probe[] = [];
+  public beacons: Beacon[] = [];
   public x: number = Infinity;
   public y: number = Infinity;
   public z: number = Infinity;
+  public permutation: PCoordSet = ["A", "B", "C"];
 
   constructor(public name: string) {}
 
   public addProbe(line: string) {
-    this.probes.push(new Probe(line, this));
+    this.beacons.push(new Beacon(line, this));
+  }
+
+  public get isKnown(): boolean {
+    return this.x !== Infinity;
+  }
+
+  public get beaconSet(): Set<string> {
+    return new Set(this.beacons.map((b) => b.label));
+  }
+
+  public countMatches(otherSet: Set<string>): number {
+    return this.beacons.filter((b) => otherSet.has(b.label)).length;
+  }
+
+  public align(
+    myBeacon: Beacon,
+    knownBeacon: Beacon,
+    permute: PCoordSet
+  ): void {
+    this.permutation = permute;
+    const goalCoord: Coord = knownBeacon.coord;
+    const myCoord: Coord = myBeacon.permuteCoord(permute);
+    this.setPosition(
+      goalCoord[0] - myCoord[0],
+      goalCoord[1] - myCoord[1],
+      goalCoord[2] - myCoord[2]
+    );
+  }
+
+  public setPosition(x: number, y: number, z: number): void {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.beacons.forEach((b) => {
+      const [x, y, z] = b.permuteCoord(this.permutation);
+      [b.x, b.y, b.z] = [x + this.x, y + this.y, z + this.z];
+    });
+  }
+
+  public reset(): this {
+    this.x = this.y = this.z = Infinity;
+    this.beacons.forEach((b) => {
+      b.x = b.y = b.z = Infinity;
+    });
+    return this;
+  }
+
+  public get label(): string {
+    return `${this.x}, ${this.y}, ${this.z} facing ${this.permutation.join(
+      "-"
+    )}`;
+  }
+
+  public distanceTo(other: Scanner): number {
+    return (
+      Math.abs(this.x - other.x) +
+      Math.abs(this.y - other.y) +
+      Math.abs(this.z - other.z)
+    );
   }
 }
 
-function part1(input: string): number {
+function run(input: string): [number, number] {
   const lines = input.split("\n");
   const scanners: Scanner[] = [];
   let scanner: Scanner;
@@ -89,33 +169,74 @@ function part1(input: string): number {
     }
   });
 
-  const knownScanners: Scanner[] = [scanners.shift() as Scanner];
-  // foreach unknown U
-  //// foreach known to find the pair K
-  ////// foreach orientation of coordinates
-  //////// foreach known probe KP calculate the
+  const scan0 = scanners.shift() as Scanner;
+  const knownScanners: Scanner[] = [scan0];
+  scan0.setPosition(0, 0, 0);
 
-  //////// foreach unknown probe UP
+  let unknowns: Scanner[] = scanners.filter((scanner) => !scanner.isKnown);
 
-  return 0;
-}
+  const checked: Set<string> = new Set<string>();
 
-const t1 = part1(test);
-if (t1 === 79) {
-  console.log("Part 1: ", part1(input));
+  while (unknowns.length) {
+    knownScanners.forEach((k) => {
+      const knownSet = k.beaconSet;
 
-  const t2 = part2(test);
-  if (t2 === 2) {
-    console.log("Part 2: ", part2(input));
-  } else {
-    console.log("Test2 fail: ", t2);
+      unknowns.forEach((u) => {
+        const key = `${k.name}:${u.name}`;
+        if (checked.has(key)) return;
+
+        for (let pi = 0; pi < permutations.length; pi++) {
+          const p = permutations[pi];
+          for (let ki = 0; ki < k.beacons.length; ki++) {
+            const kb = k.beacons[ki];
+            for (let ui = 0; ui < u.beacons.length; ui++) {
+              const ub = u.beacons[ui];
+
+              u.align(ub, kb, p);
+              const m = u.countMatches(knownSet);
+              if (m >= 12) {
+                console.log("matches: ", m);
+                console.log("Aligned", u.name, "with ", k.name, "at ", u.label);
+                ui = ki = pi = Infinity; // abort multiple loop levels
+                knownScanners.unshift(u);
+              } else {
+                u.reset();
+              }
+            }
+          }
+        }
+        checked.add(key);
+      });
+      unknowns = scanners.filter((scanner) => !scanner.isKnown);
+    });
+    console.log(`Known: ${knownScanners.length} Unknown: ${unknowns.length}`);
   }
-} else {
-  console.log("Test fail: ", t1);
+
+  const uniqueCount = knownScanners.reduce(
+    (fullSet: Set<string>, current: Scanner): Set<string> =>
+      new Set([
+        ...Array.from(fullSet.values()),
+        ...Array.from(current.beaconSet),
+      ]),
+    new Set()
+  ).size;
+
+  let maxDistance = 0;
+  for (let a = 0; a < scanners.length; a++) {
+    for (let b = 0; b < scanners.length; b++) {
+      maxDistance = Math.max(maxDistance, scanners[a].distanceTo(scanners[b]));
+    }
+  }
+
+  return [uniqueCount, maxDistance];
 }
 
-function part2(input: string): number {
-  const lines = input.split("\n");
-
-  return 0;
+const [t1, t2] = run(test);
+if (t1 === 79 && t2 == 3621) {
+  console.log("\n\nTest Pass\n\n");
+  const [p1, p2] = run(input);
+  console.log("Part 1: ", p1);
+  console.log("Part 2: ", p2);
+} else {
+  console.log("Test fail: ", t1, t2);
 }
