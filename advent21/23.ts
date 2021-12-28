@@ -176,7 +176,7 @@ function part1(input: string): number {
       // already been here for cheaper
 
       console.log(
-        "already seen",
+        "...but already seen",
         h,
         "for a cost of",
         o,
@@ -194,7 +194,7 @@ function part1(input: string): number {
       queue.push([g, score, heuristic]);
     }
   }
-  while (queue.length < 800 && minScore > 16050) {
+  while (queue.length < 800) {
     const [stateGrid, score, heuristic] = queue.pop() as [Grid, number, number];
     if (score > minScore) {
       continue;
@@ -278,7 +278,7 @@ function part1(input: string): number {
   return minScore;
 }
 
-const t1 = part1(input);
+const t1 = part1(test);
 if (t1 === 12521) {
   console.log("Test completed");
   console.log("Part 1: ", part1(input));
