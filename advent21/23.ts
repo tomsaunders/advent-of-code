@@ -1,300 +1,403 @@
 #!/usr/bin/env ts-node
 import * as fs from "fs";
-import { Grid, Cell, SPACE } from "./util";
+import { WALL, SPACE } from "./util";
 const input = fs.readFileSync("input23.txt", "utf8");
 const test = fs.readFileSync("test23.txt", "utf8");
+const input2 = fs.readFileSync("input23b.txt", "utf8");
+const test2 = fs.readFileSync("test23b.txt", "utf8");
 
-type Amph = "A" | "B" | "C" | "D";
-const hallY = 1;
+const template = `#############
+#...........#
+###.#.#.#.###
+  #.#.#.#.#
+  #########`.split("\n");
 
-class Room {
-  public GOAL_Y1 = 2;
-  public GOAL_Y2 = 3;
+const HALL_Y = 1;
 
-  constructor(public type: Amph, public x: number, public grid: Grid) {}
-
-  public get goal1(): Cell {
-    return this.grid.getCell(this.x, this.GOAL_Y1) as Cell;
-  }
-
-  public get goal2(): Cell {
-    return this.grid.getCell(this.x, this.GOAL_Y2) as Cell;
-  }
-
-  public getNextGoal(): Cell | undefined {
-    if (this.goal1.isSpace) {
-      if (this.goal2.isSpace) {
-        return this.goal2;
-      } else if (this.goal2.type === this.type) {
-        return this.goal1;
-      }
-    }
-  }
-
-  public get complete(): boolean {
-    return this.goal1.type === this.type && this.goal2.type === this.type;
-  }
+function coord(x: number, y: number): string {
+  return `${x};${y}`;
 }
 
-function part1(input: string): number {
-  const grid = Grid.fromLines(input);
-  const roomA = new Room("A", 3, grid);
-  const roomB = new Room("B", 5, grid);
-  const roomC = new Room("C", 7, grid);
-  const roomD = new Room("D", 9, grid);
-  const rmMap = new Map<Amph, Room>();
-  const rooms = [roomA, roomB, roomC, roomD];
+let debug = false;
 
-  rooms.forEach((r) => rmMap.set(r.type, r));
-
-  function getHallway(grid: Grid): Cell[] {
-    return grid.cells.filter((c) => c.y === hallY && !c.isWall);
+class Amph {
+  public code: number;
+  constructor(
+    public game: Game,
+    public x: number,
+    public y: number,
+    public type: string
+  ) {
+    this.code = this.type.charCodeAt(0) - 65;
   }
 
-  function getHallwayOptions(cell: Cell): [Cell, number][] {
-    const options: [Cell, number][] = [];
-    const grid = cell.grid;
-
-    const outsideCell = grid.getCell(cell.x, hallY) as Cell;
-    const goal1Cell = grid.getCell(cell.x, hallY + 1) as Cell;
-    if (cell.y === 3 && !goal1Cell.isSpace) {
-      return [];
-    }
-    if (!outsideCell.isSpace) {
-      return [];
-    }
-    const movesToleave = cell.y - hallY;
-    let left = outsideCell.west;
-    while (left && left.isSpace) {
-      if (![3, 5, 7, 9].includes(left.x)) {
-        options.push([left, movesToleave + outsideCell.x - left.x]);
-      }
-      left = left.west;
-    }
-    let right = outsideCell.east;
-    while (right && right.isSpace) {
-      if (![3, 5, 7, 9].includes(right.x)) {
-        options.push([right, movesToleave + right.x - outsideCell.x]);
-      }
-      right = right.east;
-    }
-    return options;
+  public get label(): string {
+    return `${this.type} @ ${this.coord}`;
   }
 
-  function getRoomDistance(cell: Cell): [number, Cell] {
-    if (cell.y !== hallY) {
-      return [0, cell]; // can only get to room from the hallway.
-    }
-    const grid = cell.grid;
-    const room = rmMap.get(cell.type as Amph) as Room;
-    const goal = room.getNextGoal();
-    if (!goal) {
-      return [0, cell];
-    }
-    let current = cell;
-    if (cell.x < room.x) {
-      for (let x = cell.x + 1; x <= room.x; x++) {
-        current = grid.getCell(x, hallY) as Cell;
-        if (!current.isSpace) {
-          return [0, cell];
-        }
-      }
-    } else {
-      for (let x = cell.x - 1; x >= room.x; x--) {
-        current = grid.getCell(x, hallY) as Cell;
-        if (!current.isSpace) {
-          return [0, cell];
-        }
-      }
-    }
-
-    return [Math.abs(cell.x - room.x) + Math.abs(goal.y - hallY), goal];
+  public get coord(): string {
+    return coord(this.x, this.y);
   }
 
-  function isAmph(cell: Cell): boolean {
-    return ["A", "B", "C", "D"].includes(cell.type);
+  public get moveCoefficient(): number {
+    return Math.pow(10, this.code);
   }
 
-  function inWrongRoom(cell: Cell): boolean {
-    if (cell.y > 1) {
-      // in a room
-      const goalX = 3 + (cell.type.charCodeAt(0) - 65) * 2;
-      if (cell.x === goalX) {
-        // in the correct column
-        if (cell.y === 3) {
-          // in the deepest goal
-          return false;
-        } else {
-          // not deepest goal
-          if (cell.south!.type === cell.type) {
-            // the deepest goal is complete, it has the same type
-            return false;
-          }
-        }
+  public get roomX(): number {
+    return 3 + this.code * 2;
+  }
+
+  public get inHallway(): boolean {
+    return this.y === HALL_Y;
+  }
+
+  public get inGoal(): boolean {
+    // if not in the right column or in the hallway, obviously not in goal
+    if (this.x !== this.roomX || this.y === HALL_Y) {
+      return false;
+    }
+    // at the right level, but check that everything lower down matches.. if not, this will have to move out
+    for (let y = this.y; y <= this.game.maxY; y++) {
+      if (this.game.getCell(this.x, y) !== this.type) {
+        return false;
       }
     }
     return true;
   }
 
-  function coeff(cell: Cell): number {
-    return Math.pow(10, cell.type.charCodeAt(0) - 65); // 10^0 = 1 .. 10^3 = 1000
+  public get minRemainingMoves(): number {
+    if (this.inGoal) {
+      return 0;
+    }
+    // if in hallway, will have to descend at least one to goal
+    // if in wrong room, will have to do that 1 plus move up to y=1 (hallway)
+    const vertical = this.y === HALL_Y ? 1 : this.y;
+    const horizontal = Math.abs(this.x - this.roomX);
+    return vertical + horizontal;
+  }
+}
+
+type Move = [number, number, number, Amph]; // destination x & y, moves, Amph that moves
+
+class Game {
+  constructor(public score: number) {}
+  public amphs: Amph[] = [];
+  public lookup: { [key: string]: Amph } = {};
+
+  public get heuristic(): number {
+    const inGoal = this.amphs.filter((a) => a.inGoal).length;
+    const inHall = this.amphs.filter((a) => a.inHallway).length;
+    return inGoal * 100 + inHall * 10;
   }
 
-  function hash(grid: Grid): string {
-    return grid.cells
-      .filter(isAmph)
-      .map((c) => c.label)
-      .sort()
-      .join(";");
+  public get isComplete(): boolean {
+    return this.amphs.every((a) => a.inGoal);
   }
 
-  function minRemainingCost(grid: Grid): number {
-    let minRemainingCost = 0;
-    const hallAmphs = getHallway(grid).filter(isAmph);
-    const roomAmphs = grid.cells.filter(isAmph).filter(inWrongRoom);
-    hallAmphs.forEach((a) => {
-      const goalX = 3 + (a.type.charCodeAt(0) - 65) * 2;
-      const minSteps = Math.abs(a.x - goalX) + 1; // at least one step into room
-      minRemainingCost += minSteps * coeff(a);
-    });
-    roomAmphs.forEach((a) => {
-      const goalX = 3 + (a.type.charCodeAt(0) - 65) * 2;
-      const minSteps = Math.abs(a.x - goalX) + a.y - hallY + 1; // step out of and at least one step into goal room
-      minRemainingCost += minSteps * coeff(a);
-    });
-    return minRemainingCost;
+  public get maxY(): number {
+    return this.amphs.length / 4 + 1; // 4 rooms, 1 hallway.
   }
 
-  let minScore = Infinity;
-  const queue: [Grid, number, number][] = [[grid, 0, 0]];
-
-  let seen = new Map<string, number>();
-  function addQueue(g: Grid, score: number, heuristic: number): void {
-    const h = hash(g);
-    const o = seen.get(h);
-    if (o && o < score) {
-      // already been here for cheaper
-
-      console.log(
-        "...but already seen",
-        h,
-        "for a cost of",
-        o,
-        "which is less than",
-        score
-      );
-      return;
-    } else {
-      if (score + minRemainingCost(g) > minScore) {
-        console.log("aborting for min cost reason");
-        return;
-      }
-
-      seen.set(h, score);
-      queue.push([g, score, heuristic]);
-    }
+  public get hash(): string {
+    return this.amphs.map((a) => a.label).join("=") + "=" + this.score;
   }
-  while (queue.length < 800) {
-    const [stateGrid, score, heuristic] = queue.pop() as [Grid, number, number];
-    if (score > minScore) {
-      continue;
-    }
 
-    rooms.forEach((r) => (r.grid = stateGrid));
-    if (rooms.every((r) => r.complete)) {
-      minScore = Math.min(minScore, score);
-      continue;
-    }
-
-    const o = seen.get(hash(stateGrid));
-    if (o && o < score) {
-      continue; // second hash abort
-    }
-
-    console.log(
-      "\nLoading state with score",
-      score,
-      "heuristic",
-      heuristic,
-      "queue length",
-      queue.length,
-      "min score currently",
-      minScore
+  public get minRemainingCost(): number {
+    return this.amphs.reduce(
+      (carry, a) => (carry += a.minRemainingMoves * a.moveCoefficient),
+      0
     );
+  }
 
-    if (score + minRemainingCost(stateGrid) > minScore) {
-      console.log("aborting for min cost reason");
-      continue;
+  public addAmph(x: number, y: number, type: string): void {
+    const a = new Amph(this, x, y, type);
+    this.amphs.push(a);
+    if (this.lookup[a.coord]) {
+      throw Error(a.coord + " is already full");
     }
+    this.lookup[a.coord] = a;
+  }
 
-    // not done, continue.
+  public getCell(x: number, y: number): string {
+    const c = coord(x, y);
+    return this.lookup[c] ? this.lookup[c].type : SPACE;
+  }
 
-    stateGrid.draw(0, false);
+  public hasPotential(currentMinimum: number): boolean {
+    return this.score + this.minRemainingCost < currentMinimum;
+  }
 
-    let foundGoalMove = false;
+  public getRoomCells(x: number): string[] {
+    const cells: string[] = [];
+    for (let y = HALL_Y + 1; y <= this.maxY; y++) {
+      cells.push(this.getCell(x, y));
+    }
+    return cells;
+  }
 
-    getHallway(stateGrid)
-      .filter(isAmph)
-      .forEach((hallAmph) => {
-        const [d, goal] = getRoomDistance(hallAmph);
-        if (d) {
-          foundGoalMove = true;
-          const newGrid = stateGrid.clone();
-          newGrid.getCell(goal.x, goal.y)!.type = hallAmph.type;
-          newGrid.getCell(hallAmph.x, hallAmph.y)!.type = SPACE;
-          const newScore = score + d * coeff(hallAmph);
-          console.log(
-            hallAmph.label,
-            "can reach goal at a cost of ",
-            newScore - score
-          );
-          addQueue(newGrid, newScore, heuristic + 1);
+  public getGoalOptions(): Move[] {
+    // find every amph that can reach a room.. whether room to room or hallway to room
+    const options: Move[] = [];
+    this.amphs
+      .filter((a) => !a.inGoal)
+      .forEach((a) => {
+        debug && console.log("..checking goal for ", a.label);
+        const goalCells = this.getRoomCells(a.roomX);
+        if (!goalCells.every((g) => g === SPACE || g === a.type)) {
+          return; // goals are only valid destinations if they are empty or if the bottom is the right type
+        }
+        debug && console.log("....goal is empty");
+
+        let path: Set<string> = new Set<string>();
+        if (!a.inHallway) {
+          let y = a.y;
+          while (y > HALL_Y) {
+            y--;
+            if (this.getCell(a.x, y) === SPACE) {
+              path.add(coord(a.x, y));
+            } else {
+              return; // blocked.
+            }
+          }
+          debug && console.log("....can reach hallway");
+        } else {
+          debug && console.log("....already in hallway");
+        }
+        // calc moves to hallway outside room
+        let i = Math.min(a.roomX, a.x);
+        let j = Math.max(a.roomX, a.x);
+        for (let x = i; x <= j; x++) {
+          if (x === a.x) continue;
+          if (this.getCell(x, HALL_Y) === SPACE) {
+            path.add(coord(x, HALL_Y));
+          } else {
+            return; // blocked.
+          }
+        }
+        debug && console.log("....can reach hallway outside goal");
+
+        let deepestY = 0;
+        for (let y = HALL_Y + 1; y <= this.maxY; y++) {
+          const c = this.getCell(a.roomX, y);
+          if (c === SPACE) {
+            deepestY = y;
+            path.add(coord(a.roomX, y));
+          }
+        }
+        debug && console.log("....can get inside goal");
+        options.push([a.roomX, deepestY, path.size, a]);
+      });
+
+    return options;
+  }
+
+  public getHallwayOptions(): Move[] {
+    const options: Move[] = [];
+
+    this.amphs
+      .filter((a) => !a.inGoal && !a.inHallway)
+      .forEach((a) => {
+        debug && console.log("..checking hallway for ", a.label);
+        let y = a.y;
+        while (y > HALL_Y) {
+          y--;
+          if (this.getCell(a.x, y) === SPACE) {
+          } else {
+            return; // blocked.
+          }
+        }
+        const movesToLeave = a.y - HALL_Y;
+        // move left checking free options
+        for (let lx = a.x - 1; lx > 0; lx--) {
+          const moves = a.x - lx + movesToLeave;
+          if (this.getCell(lx, y) === SPACE) {
+            if (![3, 5, 7, 9].includes(lx)) {
+              // cant stop right outside a room
+              options.push([lx, HALL_Y, moves, a]);
+              debug && console.log("....found option", coord(lx, HALL_Y));
+            }
+          } else {
+            lx = -99;
+          }
+        }
+
+        // move left checking free options
+        for (let rx = a.x + 1; rx < 12; rx++) {
+          const moves = rx - a.x + movesToLeave;
+          if (this.getCell(rx, y) === SPACE) {
+            if (![3, 5, 7, 9].includes(rx)) {
+              options.push([rx, HALL_Y, moves, a]);
+              debug && console.log("....found option", coord(rx, HALL_Y));
+            }
+          } else {
+            rx = 99;
+          }
         }
       });
-    if (!foundGoalMove) {
-      stateGrid.cells
-        .filter(isAmph)
-        .filter(inWrongRoom)
-        .forEach((roomAmph) => {
-          getHallwayOptions(roomAmph).forEach(([dest, d]) => {
-            const newGrid = stateGrid.clone();
-            newGrid.getCell(dest.x, dest.y)!.type = roomAmph.type;
-            newGrid.getCell(roomAmph.x, roomAmph.y)!.type = SPACE;
-            const newScore = score + d * coeff(roomAmph);
-            console.log(
-              roomAmph.label,
-              "can reach hallway",
-              dest.coord,
-              "at a cost of ",
-              newScore - score
-            );
-            addQueue(newGrid, newScore, heuristic);
-          });
-        });
+
+    return options;
+  }
+
+  public makeMove(move: Move): void {
+    const [x, y, count, amph] = move;
+
+    const thisAmph = this.lookup[amph.coord];
+    delete this.lookup[amph.coord];
+
+    const cost = thisAmph.moveCoefficient * count;
+
+    this.score += cost;
+    thisAmph.x = x;
+    thisAmph.y = y;
+    if (this.lookup[thisAmph.coord])
+      throw new Error(thisAmph.coord + " is already full");
+    this.lookup[thisAmph.coord] = thisAmph;
+    debug &&
+      console.log(
+        "....moving",
+        amph.type,
+        "at",
+        amph.coord,
+        "to",
+        thisAmph.coord
+      );
+  }
+
+  public draw(): void {
+    for (let y = 0; y < template.length; y++) {
+      let l = "";
+      for (let x = 0; x < template[y].length; x++) {
+        const c = coord(x, y);
+        l += this.lookup[c] ? this.lookup[c].type : template[y][x];
+      }
+      debug && console.log(l);
     }
-    queue.sort((a, b) => a[2] - b[2]);
+  }
+
+  public clone(): Game {
+    const game = new Game(this.score);
+    for (const a of this.amphs) {
+      game.addAmph(a.x, a.y, a.type);
+    }
+    return game;
+  }
+
+  static fromString(input: string): Game {
+    const lines = input.split("\n");
+
+    const game = new Game(0);
+    for (let y = 0; y < lines.length; y++) {
+      for (let x = 0; x < lines[y].length; x++) {
+        const c = lines[y][x];
+        if (c === WALL || c === SPACE || c === " ") {
+          // ignore
+        } else {
+          game.addAmph(x, y, c);
+        }
+      }
+    }
+    return game;
+  }
+
+  static pathFindingPrioritySort(a: Game, b: Game): number {
+    if (a.heuristic === b.heuristic) {
+      return a.minRemainingCost - b.minRemainingCost; // try min score
+    }
+    return b.heuristic - a.heuristic; // max heuristic
+  }
+}
+
+function run(input: string): number {
+  let minScore = Infinity;
+  const queue: Game[] = [Game.fromString(input)];
+
+  let seen: Set<string> = new Set<string>();
+
+  function addQueue(game: Game): void {
+    if (!game.hasPotential(minScore)) {
+      debug && console.log("too expensive to queue");
+      return;
+    }
+    if (seen.has(game.hash)) {
+      debug && console.log("already seen", game.hash);
+    }
+    debug && console.log("queueed", game.hash);
+    seen.add(game.hash);
+    queue.push(game);
+  }
+
+  while (queue.length) {
+    const game: Game = queue.shift() as Game;
+    if (game.score > minScore) {
+      continue;
+    }
+    if (game.isComplete) {
+      if (game.score < minScore) {
+        minScore = Math.min(minScore, game.score);
+        console.log(
+          "game complete!",
+          game.score,
+          "min now",
+          minScore,
+          "queue len",
+          queue.length
+        );
+      }
+      continue;
+    }
+    game.draw();
+
+    // any move that can reach a goal is perfect and the order doesn't matter
+    let hasGoalMove = false;
+    game.getGoalOptions().forEach((move) => {
+      const newGame = game.clone();
+      debug && console.log("Making goal move");
+      newGame.makeMove(move);
+      addQueue(newGame);
+      hasGoalMove = true;
+    });
+
+    if (!hasGoalMove) {
+      // at this point, consider the option branches
+      game.getHallwayOptions().forEach((move) => {
+        const newGame = game.clone();
+        debug && console.log("Making hallway move");
+        newGame.makeMove(move);
+        addQueue(newGame);
+      });
+    }
+
+    queue.sort(Game.pathFindingPrioritySort);
+    if (queue[0])
+      debug &&
+        console.log(
+          "\nQueue sort: next is ",
+          queue[0].heuristic,
+          queue[0].score,
+          "queue size is",
+          queue.length,
+          "min score is",
+          minScore
+        );
   }
 
   return minScore;
 }
 
-const t1 = part1(test);
+const t1 = run(test);
 if (t1 === 12521) {
   console.log("Test completed");
-  console.log("Part 1: ", part1(input));
-
-  const t2 = part2(test);
-  if (t2 === 2) {
-    console.log("Part 2: ", part2(input));
-  } else {
-    console.log("Test2 fail: ", t2);
+  console.log("Part One:", run(input));
+  const t2 = run(test2);
+  if (t2 === 44169) {
+    console.log("Test completed");
+    console.log("Part Two:", run(input2));
   }
-} else {
-  console.log("Test fail: ", t1);
 }
 
-function part2(input: string): number {
-  const lines = input.split("\n");
-
-  return 0;
-}
+// A note on prioritising the queue
+// adding the notion of the minimum remaining cost and evaluating the most promising part of the queue based on that
+// changed the execution time for
+// ...part 1 test and input - 2 min to 12 seconds - 10x better
+// ...both tests and both inputs - 9 minutes to 9.75 minutes - slower?!
+// this is way slower than is sensible, perhaps revisiting on a work wednesday would be a good idea
