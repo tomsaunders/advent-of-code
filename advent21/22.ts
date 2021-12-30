@@ -4,153 +4,28 @@ const input = fs.readFileSync("input22.txt", "utf8");
 const test = fs.readFileSync("test22.txt", "utf8");
 const test2 = fs.readFileSync("test22b.txt", "utf8");
 
-function naive1(input: string): number {
-  const lines = input.split("\n");
-  const onSet = new Set<string>();
-
-  function range(str: string): [number, number] {
-    const bits = str.split("..").map((b) => parseInt(b, 10));
-    const low = Math.min(...bits);
-    const high = Math.max(...bits);
-    return [Math.max(low, -50), Math.min(high, 50)];
-  }
-
-  lines.forEach((l) => {
-    l = l
-      .replace("on ", "on,")
-      .replace("off ", "off,")
-      .replace("x=", "")
-      .replace("y=", "")
-      .replace("z=", "");
-    const [instr, xStr, yStr, zStr] = l.split(",");
-    const [xMin, xMax] = range(xStr);
-    const [yMin, yMax] = range(yStr);
-    const [zMin, zMax] = range(zStr);
-
-    for (let x = xMin; x <= xMax; x++) {
-      for (let y = yMin; y <= yMax; y++) {
-        for (let z = zMin; z <= zMax; z++) {
-          if (instr === "on") {
-            onSet.add(`${x};${y};${z}`);
-          } else {
-            onSet.delete(`${x};${y};${z}`);
-          }
-        }
-      }
-    }
-  });
-
-  return onSet.size;
-}
-
-class CoordSystem {
-  public x: Map<number, Coord> = new Map<number, Coord>();
-  public y: Map<number, Coord> = new Map<number, Coord>();
-  public z: Map<number, Coord> = new Map<number, Coord>();
-  public cx: Map<number, Coord> = new Map<number, Coord>();
-  public cy: Map<number, Coord> = new Map<number, Coord>();
-  public cz: Map<number, Coord> = new Map<number, Coord>();
-
-  public xVal: number[] = [];
-  public yVal: number[] = [];
-  public zVal: number[] = [];
-
-  private magic(
-    expMap: Map<number, Coord>,
-    comMap: Map<number, Coord>,
-    sortArr: number[],
-    expanded: number
-  ): Coord {
-    if (!expMap.has(expanded)) {
-      expMap.set(expanded, new Coord(expanded));
-      sortArr.push(expanded);
-      sortArr
-        .sort((a, b) => a - b)
-        .forEach((val, i) => {
-          const coord = expMap.get(val) as Coord;
-          coord.compressed = i;
-          comMap.set(i, coord);
-        });
-      // console.log(
-      //   "adding magic",
-      //   expanded,
-      //   "order now",
-      //   sortArr,
-      //   expMap,
-      //   comMap
-      // );
-    }
-    return expMap.get(expanded)!;
-  }
-
-  public buildCoord(axis: "x" | "y" | "z", expanded: number): Coord {
-    if (axis === "x") {
-      return this.magic(this.x, this.cx, this.xVal, expanded);
-    } else if (axis === "y") {
-      return this.magic(this.y, this.cy, this.yVal, expanded);
-    } else {
-      return this.magic(this.z, this.cz, this.zVal, expanded);
-    }
-  }
-
-  public getRange(point: number, lookup: Map<number, Coord>): number {
-    const from = lookup.get(point)!;
-    const to = lookup.get(point + 1)!;
-    return Math.abs(to.expanded - from.expanded) + 1;
-  }
-
-  public getVolume(point: string): number {
-    const [cx, cy, cz] = point.split(";").map((i) => parseInt(i, 10));
-    const dx = this.getRange(cx, this.cx);
-    const dy = this.getRange(cy, this.cy);
-    const dz = this.getRange(cz, this.cz);
-    // console.log("expanded ", point, "to", `${dx} * ${dy} * ${dz}`);
-
-    return dx * dy * dz;
-  }
-}
-
-class Coord {
-  public compressed: number = Infinity;
-  constructor(public expanded: number) {}
-
-  public valueOf(): number {
-    return this.expanded;
-  }
-}
-
 class Cube {
   constructor(
-    public mode: "on" | "off",
-    public xMin: Coord,
-    public xMax: Coord,
-    public yMin: Coord,
-    public yMax: Coord,
-    public zMin: Coord,
-    public zMax: Coord,
-    public name: string
+    public mode: string,
+    public x1: number,
+    public x2: number,
+    public y1: number,
+    public y2: number,
+    public z1: number,
+    public z2: number
   ) {}
-  public get compressed(): [number, number, number, number, number, number] {
-    return [
-      this.xMin.compressed,
-      this.xMax.compressed,
-      this.yMin.compressed,
-      this.yMax.compressed,
-      this.zMin.compressed,
-      this.zMax.compressed,
-    ];
+
+  public get on(): boolean {
+    return this.mode === "on";
   }
+
   public withinRange(maxRange: number): boolean {
-    return [
-      this.xMax,
-      this.xMin,
-      this.yMax,
-      this.yMin,
-      this.zMax,
-      this.zMin,
-    ].every((n) => Math.abs(n.expanded) <= maxRange);
+    return [this.x1, this.x2, this.y1, this.y2, this.z1, this.z2].every(
+      (n) => Math.abs(n) <= maxRange
+    );
   }
-  public static fromLine(line: string, sys: CoordSystem): Cube {
+
+  public static fromLine(line: string): Cube {
     const l = line
       .replace("on ", "on,")
       .replace("off ", "off,")
@@ -161,62 +36,122 @@ class Cube {
     const [xMin, xMax] = xStr.split("..").map((b) => parseInt(b, 10));
     const [yMin, yMax] = yStr.split("..").map((b) => parseInt(b, 10));
     const [zMin, zMax] = zStr.split("..").map((b) => parseInt(b, 10));
-
-    return new Cube(
-      instr as "on" | "off",
-      sys.buildCoord("x", xMin),
-      sys.buildCoord("x", xMax),
-      sys.buildCoord("y", yMin),
-      sys.buildCoord("y", yMax),
-      sys.buildCoord("z", zMin),
-      sys.buildCoord("z", zMax),
-      `|| ${line} ||`
-    );
+    return new Cube(instr, xMin, xMax, yMin, yMax, zMin, zMax);
   }
-  public get compressedLabel(): string {
-    const [xMin, xMax, yMin, yMax, zMin, zMax] = this.compressed;
-    return `x=${xMin}..${xMax},y=${yMin}..${yMax},z=${zMin}..${zMax}`;
+}
+
+class CoordSystem {
+  public indexLookup!: Map<number, number>;
+  constructor(public values: number[] = []) {}
+
+  public get size(): number {
+    return this.values.length;
+  }
+
+  public update() {
+    this.values = Array.from(new Set(this.values)).sort((a, b) => a - b);
+    this.indexLookup = new Map<number, number>();
+    this.values.forEach((val, i) => {
+      this.indexLookup.set(val, i);
+    });
+  }
+
+  public getByIndex(idx: number): number {
+    return this.values[idx];
+  }
+
+  public add(n1: number, n2: number): void {
+    this.values.push(n1, n2);
+  }
+
+  public getLength(idx: number): number {
+    const n1 = this.getByIndex(idx);
+    const n2 = this.getByIndex(idx + 1);
+    return n2 - n1;
+  }
+
+  public getIndexes(n1: number, n2: number): [number, number] {
+    return [this.indexLookup.get(n1)!, this.indexLookup.get(n2)! - 1];
+  }
+}
+
+class SuperSet {
+  private store: boolean[][][] = [];
+  public constructor(xr: number, yr: number, zr: number) {
+    for (let x = 0; x < xr; x++) {
+      this.store.push([]);
+      for (let y = 0; y < yr; y++) {
+        this.store[x].push(new Array<boolean>(zr));
+      }
+    }
+  }
+
+  public set(x: number, y: number, z: number, v: boolean): void {
+    this.store[x][y][z] = v;
+  }
+
+  public has(x: number, y: number, z: number): boolean {
+    return this.store[x][y][z];
   }
 }
 
 function part1(input: string): number {
   const lines = input.split("\n");
-  const sys = new CoordSystem();
-  const cubes = lines
-    .map((l) => Cube.fromLine(l, sys))
-    .filter((c) => c.withinRange(50));
+  const cubes = lines.map(Cube.fromLine).filter((c) => c.withinRange(50));
 
-  const onSet = new Set<string>();
+  return getCubesVolume(cubes);
+}
+
+function part2(input: string): number {
+  const lines = input.split("\n");
+  const cubes = lines.map(Cube.fromLine);
+
+  return getCubesVolume(cubes);
+}
+
+function getCubesVolume(cubes: Cube[]): number {
+  const xSys = new CoordSystem();
+  const ySys = new CoordSystem();
+  const zSys = new CoordSystem();
   cubes.forEach((cube) => {
-    console.log(cube.name);
-    console.log(cube.compressedLabel);
-    console.log("\n");
-    const [xMin, xMax, yMin, yMax, zMin, zMax] = cube.compressed;
-    for (let x = xMin; x < xMax; x++) {
-      for (let y = yMin; y < yMax; y++) {
-        for (let z = zMin; z < zMax; z++) {
-          if (cube.mode === "on") {
-            console.log("on", `${x};${y};${z}`);
-            onSet.add(`${x};${y};${z}`);
-          } else {
-            console.log("off", `${x};${y};${z}`);
-            onSet.delete(`${x};${y};${z}`);
-          }
+    xSys.add(cube.x1, cube.x2 + 1);
+    ySys.add(cube.y1, cube.y2 + 1);
+    zSys.add(cube.z1, cube.z2 + 1);
+  });
+  xSys.update();
+  ySys.update();
+  zSys.update();
+
+  const onSet = new SuperSet(xSys.size, ySys.size, zSys.size);
+  cubes.forEach((c) => {
+    const [x1, x2] = xSys.getIndexes(c.x1, c.x2 + 1);
+    const [y1, y2] = ySys.getIndexes(c.y1, c.y2 + 1);
+    const [z1, z2] = zSys.getIndexes(c.z1, c.z2 + 1);
+
+    for (let z = z1; z <= z2; ++z) {
+      for (let y = y1; y <= y2; ++y) {
+        for (let x = x1; x <= x2; ++x) {
+          onSet.set(x, y, z, c.on);
         }
       }
     }
   });
 
-  return Array.from(onSet.values()).reduce(
-    (carry, point: string) => carry + sys.getVolume(point),
-    0
-  );
+  let vol = 0;
+  for (let z = 0; z < zSys.size; z++) {
+    for (let y = 0; y < ySys.size; y++) {
+      for (let x = 0; x < xSys.size; x++) {
+        if (onSet.has(x, y, z)) {
+          vol += xSys.getLength(x) * ySys.getLength(y) * zSys.getLength(z);
+        }
+      }
+    }
+  }
+
+  return vol;
 }
 
-const t1 = part1(`on x=10..12,y=10..12,z=10..12
-on x=11..13,y=11..13,z=11..13
-off x=9..11,y=9..11,z=9..11
-on x=10..10,y=10..10,z=10..10`);
+const t1 = part1(test);
 if (t1 === 590784) {
   console.log("Part 1: ", part1(input));
   const t2 = part1(test2);
@@ -229,9 +164,4 @@ if (t1 === 590784) {
 } else {
   console.log("Test fail: ", t1);
 }
-
-function part2(input: string): number {
-  const lines = input.split("\n");
-
-  return 0;
-}
+// takes a long time to run and must be executed with `npm run high-memory 22.ts`
