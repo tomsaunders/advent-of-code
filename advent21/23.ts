@@ -22,6 +22,9 @@ let debug = false;
 
 class Amph {
   public code: number;
+  public moveCoefficient: number = 1;
+  public roomX: number = 1;
+
   constructor(
     public game: Game,
     public x: number,
@@ -29,6 +32,8 @@ class Amph {
     public type: string
   ) {
     this.code = this.type.charCodeAt(0) - 65;
+    this.moveCoefficient = Math.pow(10, this.code);
+    this.roomX = 3 + this.code * 2;
   }
 
   public get label(): string {
@@ -37,14 +42,6 @@ class Amph {
 
   public get coord(): string {
     return coord(this.x, this.y);
-  }
-
-  public get moveCoefficient(): number {
-    return Math.pow(10, this.code);
-  }
-
-  public get roomX(): number {
-    return 3 + this.code * 2;
   }
 
   public get inHallway(): boolean {
@@ -71,8 +68,12 @@ class Amph {
     }
     // if in hallway, will have to descend at least one to goal
     // if in wrong room, will have to do that 1 plus move up to y=1 (hallway)
-    const vertical = this.y === HALL_Y ? 1 : this.y;
-    const horizontal = Math.abs(this.x - this.roomX);
+    const vertical = this.inHallway ? 1 : this.y;
+    let horizontal = Math.abs(this.x - this.roomX);
+    if (horizontal === 0) {
+      // not in goal, but in the right room = will have to move at least 2 horizontally as well
+      horizontal = 2;
+    }
     return vertical + horizontal;
   }
 }
@@ -80,26 +81,26 @@ class Amph {
 type Move = [number, number, number, Amph]; // destination x & y, moves, Amph that moves
 
 class Game {
-  constructor(public score: number) {}
+  public hash: string = "";
+  public heuristic: number = 0;
+  constructor(public score: number, public spacesMoved: number) {}
   public amphs: Amph[] = [];
   public lookup: { [key: string]: Amph } = {};
 
-  public get heuristic(): number {
-    const inGoal = this.amphs.filter((a) => a.inGoal).length;
-    const inHall = this.amphs.filter((a) => a.inHallway).length;
-    return inGoal * 100 + inHall * 10;
-  }
-
   public get isComplete(): boolean {
-    return this.amphs.every((a) => a.inGoal);
+    return this.amphs.every((a) => a.x === a.roomX); // more efficient than calling the full `inGoal` check.
   }
 
   public get maxY(): number {
     return this.amphs.length / 4 + 1; // 4 rooms, 1 hallway.
   }
 
-  public get hash(): string {
-    return this.amphs.map((a) => a.label).join("=") + "=" + this.score;
+  public updateHash(): void {
+    this.hash = this.amphs.map((a) => a.label).join("=") + "=" + this.score;
+
+    const inGoal = this.amphs.filter((a) => a.inGoal).length;
+    const inHall = this.amphs.filter((a) => a.inHallway).length;
+    this.heuristic = inGoal * 100 + inHall * 10;
   }
 
   public get minRemainingCost(): number {
@@ -247,11 +248,15 @@ class Game {
     const cost = thisAmph.moveCoefficient * count;
 
     this.score += cost;
+    this.spacesMoved += count;
+
     thisAmph.x = x;
     thisAmph.y = y;
     if (this.lookup[thisAmph.coord])
       throw new Error(thisAmph.coord + " is already full");
     this.lookup[thisAmph.coord] = thisAmph;
+    this.updateHash();
+
     debug &&
       console.log(
         "....moving",
@@ -275,17 +280,18 @@ class Game {
   }
 
   public clone(): Game {
-    const game = new Game(this.score);
+    const game = new Game(this.score, this.spacesMoved);
     for (const a of this.amphs) {
       game.addAmph(a.x, a.y, a.type);
     }
+    game.updateHash();
     return game;
   }
 
   static fromString(input: string): Game {
     const lines = input.split("\n");
 
-    const game = new Game(0);
+    const game = new Game(0, 0);
     for (let y = 0; y < lines.length; y++) {
       for (let x = 0; x < lines[y].length; x++) {
         const c = lines[y][x];
@@ -296,12 +302,14 @@ class Game {
         }
       }
     }
+    game.updateHash();
     return game;
   }
 
   static pathFindingPrioritySort(a: Game, b: Game): number {
     if (a.heuristic === b.heuristic) {
-      return a.minRemainingCost - b.minRemainingCost; // try min score
+      // return a.minRemainingCost - b.minRemainingCost; // try min score
+      return a.spacesMoved - b.spacesMoved;
     }
     return b.heuristic - a.heuristic; // max heuristic
   }
@@ -326,7 +334,11 @@ function run(input: string): number {
     queue.push(game);
   }
 
+  let i = 0;
+  let mql = 0;
   while (queue.length) {
+    i++;
+    mql = Math.max(mql, queue.length);
     const game: Game = queue.shift() as Game;
     if (game.score > minScore) {
       continue;
@@ -380,6 +392,7 @@ function run(input: string): number {
           minScore
         );
   }
+  console.log("in game loop ", i, "times, max queue len", mql);
 
   return minScore;
 }
@@ -401,3 +414,16 @@ if (t1 === 12521) {
 // ...part 1 test and input - 2 min to 12 seconds - 10x better
 // ...both tests and both inputs - 9 minutes to 9.75 minutes - slower?!
 // this is way slower than is sensible, perhaps revisiting on a work wednesday would be a good idea
+
+// making the heuristic the min number of moves made it
+// ...part 1s = 10s
+// ...both 1&2= 6min
+
+// after profiling to see where time was spent, caching some getters
+// ...both = 3 m
+
+// and doing that caching at better times
+// ...both = 2m
+
+// and caching the amph getters .
+// ...both = 2m (after introducing some crashes in failed efforts)
