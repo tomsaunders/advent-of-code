@@ -30,11 +30,21 @@ export class Cell {
   // NSEW + diagonals
   public allNeighbours: Cell[] = [];
 
-  public init(): void {
-    this.north = this.grid.getCell(this.x, this.y - 1, this.z);
-    this.south = this.grid.getCell(this.x, this.y + 1, this.z);
-    this.east = this.grid.getCell(this.x + 1, this.y, this.z);
-    this.west = this.grid.getCell(this.x - 1, this.y, this.z);
+  public init(doReset = true, createNeighbours = false): void {
+    this.north = this.grid.getCell(
+      this.x,
+      this.y - 1,
+      this.z,
+      createNeighbours
+    );
+    this.south = this.grid.getCell(
+      this.x,
+      this.y + 1,
+      this.z,
+      createNeighbours
+    );
+    this.east = this.grid.getCell(this.x + 1, this.y, this.z, createNeighbours);
+    this.west = this.grid.getCell(this.x - 1, this.y, this.z, createNeighbours);
 
     this.directNeighbours = [
       this.north,
@@ -44,17 +54,19 @@ export class Cell {
     ].filter((c) => !!c) as Cell[];
 
     this.diagonalNeighbours = [
-      this.grid.getCell(this.x - 1, this.y - 1, this.z),
-      this.grid.getCell(this.x + 1, this.y - 1, this.z),
-      this.grid.getCell(this.x - 1, this.y + 1, this.z),
-      this.grid.getCell(this.x + 1, this.y + 1, this.z),
+      this.grid.getCell(this.x - 1, this.y - 1, this.z, createNeighbours),
+      this.grid.getCell(this.x + 1, this.y - 1, this.z, createNeighbours),
+      this.grid.getCell(this.x - 1, this.y + 1, this.z, createNeighbours),
+      this.grid.getCell(this.x + 1, this.y + 1, this.z, createNeighbours),
     ].filter((c) => !!c) as Cell[];
 
     this.openNeighbours = this.directNeighbours.filter((c) => c.isSpace);
     this.allNeighbours = this.diagonalNeighbours.concat(this.directNeighbours);
 
     this.knownDistances = [];
-    this.reset();
+    if (doReset) {
+      this.reset();
+    }
   }
 
   public get hexNeighbours(): Cell[] {
