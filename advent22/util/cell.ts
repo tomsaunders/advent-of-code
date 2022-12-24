@@ -70,6 +70,17 @@ export class Cell {
     ] as Cell[];
   }
 
+  public getCubeNeighbours(createNeighbours = false): Cell[] {
+    return [
+      this.getNorth(createNeighbours),
+      this.getSouth(createNeighbours),
+      this.getEast(createNeighbours),
+      this.getWest(createNeighbours),
+      this.getUp(createNeighbours),
+      this.getDown(createNeighbours),
+    ].filter((c) => !!c) as Cell[];
+  }
+
   public reset(): void {
     this.visited = false;
     this.tentativeDist = 9999;
@@ -175,10 +186,20 @@ export class Cell {
   public getNorthEast(createNeighbours = false): Cell | undefined {
     return this.grid.getCell(this.x + 1, this.y - 1, this.z, createNeighbours);
   }
+
   public getSouthWest(createNeighbours = false): Cell | undefined {
     return this.grid.getCell(this.x - 1, this.y + 1, this.z, createNeighbours);
   }
+
   public getSouthEast(createNeighbours = false): Cell | undefined {
     return this.grid.getCell(this.x + 1, this.y + 1, this.z, createNeighbours);
+  }
+
+  public getUp(createNeighbours = false): Cell | undefined {
+    return this.grid.getCell(this.x, this.y, this.z + 1, createNeighbours);
+  }
+
+  public getDown(createNeighbours = false): Cell | undefined {
+    return this.grid.getCell(this.x, this.y, this.z - 1, createNeighbours);
   }
 }
