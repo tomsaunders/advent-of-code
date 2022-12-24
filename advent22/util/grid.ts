@@ -64,13 +64,13 @@ export class Grid {
     if (drawCoords) {
       let xRow = `${YELLOW}   `;
       for (let x = this.minX; x <= this.maxX; x++) {
-        xRow += x % 10 === 0 ? Math.round(x / 10) : " ";
+        xRow += x % 10 === 0 ? Math.round(Math.abs(x) / 10) : " ";
       }
       xRow = `${xRow}${RESET}`;
       console.log(xRow);
       xRow = `${YELLOW}   `;
       for (let x = this.minX; x <= this.maxX; x++) {
-        xRow += x % 10;
+        xRow += Math.abs(x) % 10;
       }
       xRow = `${xRow}${RESET}`;
       console.log(xRow);
