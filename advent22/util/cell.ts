@@ -31,20 +31,10 @@ export class Cell {
   public allNeighbours: Cell[] = [];
 
   public init(doReset = true, createNeighbours = false): void {
-    this.north = this.grid.getCell(
-      this.x,
-      this.y - 1,
-      this.z,
-      createNeighbours
-    );
-    this.south = this.grid.getCell(
-      this.x,
-      this.y + 1,
-      this.z,
-      createNeighbours
-    );
-    this.east = this.grid.getCell(this.x + 1, this.y, this.z, createNeighbours);
-    this.west = this.grid.getCell(this.x - 1, this.y, this.z, createNeighbours);
+    this.north = this.getNorth(createNeighbours);
+    this.south = this.getSouth(createNeighbours);
+    this.east = this.getEast(createNeighbours);
+    this.west = this.getWest(createNeighbours);
 
     this.directNeighbours = [
       this.north,
@@ -54,10 +44,10 @@ export class Cell {
     ].filter((c) => !!c) as Cell[];
 
     this.diagonalNeighbours = [
-      this.grid.getCell(this.x - 1, this.y - 1, this.z, createNeighbours),
-      this.grid.getCell(this.x + 1, this.y - 1, this.z, createNeighbours),
-      this.grid.getCell(this.x - 1, this.y + 1, this.z, createNeighbours),
-      this.grid.getCell(this.x + 1, this.y + 1, this.z, createNeighbours),
+      this.getNorthWest(createNeighbours),
+      this.getNorthEast(createNeighbours),
+      this.getSouthWest(createNeighbours),
+      this.getSouthEast(createNeighbours),
     ].filter((c) => !!c) as Cell[];
 
     this.openNeighbours = this.directNeighbours.filter((c) => c.isSpace);
@@ -160,5 +150,35 @@ export class Cell {
 
   public cloneToGrid(grid: Grid): Cell {
     return new Cell(grid, this.x, this.y, this.z, this.type);
+  }
+
+  public getNorth(createNeighbours = false): Cell | undefined {
+    return this.grid.getCell(this.x, this.y - 1, this.z, createNeighbours);
+  }
+
+  public getSouth(createNeighbours = false): Cell | undefined {
+    return this.grid.getCell(this.x, this.y + 1, this.z, createNeighbours);
+  }
+
+  public getEast(createNeighbours = false): Cell | undefined {
+    return this.grid.getCell(this.x + 1, this.y, this.z, createNeighbours);
+  }
+
+  public getWest(createNeighbours = false): Cell | undefined {
+    return this.grid.getCell(this.x - 1, this.y, this.z, createNeighbours);
+  }
+
+  public getNorthWest(createNeighbours = false): Cell | undefined {
+    return this.grid.getCell(this.x - 1, this.y - 1, this.z, createNeighbours);
+  }
+
+  public getNorthEast(createNeighbours = false): Cell | undefined {
+    return this.grid.getCell(this.x + 1, this.y - 1, this.z, createNeighbours);
+  }
+  public getSouthWest(createNeighbours = false): Cell | undefined {
+    return this.grid.getCell(this.x - 1, this.y + 1, this.z, createNeighbours);
+  }
+  public getSouthEast(createNeighbours = false): Cell | undefined {
+    return this.grid.getCell(this.x + 1, this.y + 1, this.z, createNeighbours);
   }
 }
