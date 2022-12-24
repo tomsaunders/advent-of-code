@@ -77,7 +77,7 @@ export class Grid {
     }
 
     for (let y = this.minY; y <= this.maxY; y++) {
-      const yPos = y < 10 ? `0${y}` : `${y}`;
+      const yPos = y < 10 ? `0${Math.abs(y)}` : `${Math.abs(y)}`;
       let line = drawCoords ? `${YELLOW}${yPos}${RESET} ` : "";
       for (let x = this.minX; x <= this.maxX; x++) {
         const c = `${x}:${y}:${z}`;
@@ -95,13 +95,43 @@ export class Grid {
     }
   }
 
-  public shortestPath(from: Cell, to: Cell): number {
+  public breadthFirst(
+    from: Cell,
+    getOpenNeighbours?: (c: Cell) => Cell[]
+  ): void {
+    if (!getOpenNeighbours) {
+      getOpenNeighbours = (c: Cell) => c.openNeighbours;
+    }
+    let unvisitedSet: Cell[] = [from];
+    from.tentativeDist = 0;
+    while (unvisitedSet.length) {
+      unvisitedSet.sort((a, b) => b.tentativeDist - a.tentativeDist);
+      let c = unvisitedSet.pop() as Cell;
+      for (const n of getOpenNeighbours(c)) {
+        const d = c.tentativeDist + n.cost;
+        if (d < n.tentativeDist) {
+          n.tentativeDist = d;
+          unvisitedSet.push(n);
+        }
+      }
+    }
+  }
+
+  public shortestPath(
+    from: Cell,
+    to: Cell,
+    getOpenNeighbours?: (c: Cell) => Cell[]
+  ): number {
+    if (!getOpenNeighbours) {
+      getOpenNeighbours = (c: Cell) => c.openNeighbours;
+    }
+
     let unvisitedSet: Cell[] = this.cells.slice(0);
     from.tentativeDist = 0;
     let c: Cell = from;
 
     while (!to.visited && unvisitedSet.length) {
-      for (const n of c.openNeighbours) {
+      for (const n of getOpenNeighbours(c)) {
         const d = c.tentativeDist + n.cost;
         n.tentativeDist = Math.min(d, n.tentativeDist);
       }
