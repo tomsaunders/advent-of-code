@@ -1,0 +1,19 @@
+{
+  "name": "advent20",
+  "version": "1.0.0",
+  "description": "advent of code",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "high-memory": "node --max_old_space_size=8048 ./node_modules/.bin/ts-node"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "ts-node": "^10.4.0",
+    "typescript": "^3.9.7"
+  },
+  "dependencies": {
+    "@types/node": "^10.12.15"
+  }
+}
