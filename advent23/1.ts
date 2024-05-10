@@ -55,13 +55,12 @@ function part2(input: string): number {
         .split("")
         .reverse()
         .join("")
-        .replace(/(eno|owt|eerht|"
-        ????????ruof|evif|xis|neves|thgie|enin)/g, (match) => pukool[match] as string),
+        .replace(/(eno|owt|eerht|ruof|evif|xis|neves|thgie|enin)/g, (match) => pukool[match] as string),
     ])
     .map(([l, r]) => [l.match(/[0-9]/g) as string[], r.match(/[0-9]/g) as string[]])
     .map(([lums, rums]) => `${lums[0]}${rums[0]}`)
     .map((s) => parseInt(s, 10));
-  return arrSum(numbers);lkzsax
+  return arrSum(numbers);
 }
 
 const t = part1(test);
