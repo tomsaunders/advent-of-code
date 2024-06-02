@@ -15,7 +15,10 @@ export const WHITE: string = "\x1b[37m";
 export const RESET: string = "\x1b[0m";
 
 export function test(a: any, b: any): void {
-  const o = a == b ? `${GREEN}Test pass = ${a}${RESET}` : `${RED}!!Test fail got ${b} wanted ${a}${RESET}`;
+  const o =
+    a == b
+      ? `${GREEN}Test pass = ${a}${RESET}`
+      : `${RED}!!Test fail got ${b} wanted ${a}${RESET}`;
   console.log(o);
 }
 
@@ -51,4 +54,8 @@ export function getStringGroups(input: string): string[][] {
 export function isNumeric(str: string | undefined): boolean {
   if (typeof str != "string") return false; // we only process strings!
   return !isNaN(parseFloat(str)); // ...and ensure strings of whitespace fail
+}
+
+export function mapNum(str: string): number {
+  return parseInt(str, 10);
 }
