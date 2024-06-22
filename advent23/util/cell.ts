@@ -1,15 +1,11 @@
 import { Grid } from "./grid";
 import { RED, RESET, WHITE, WALL, SPACE, GREEN, ON, OFF } from ".";
 
+export type CellCreator = (grid: Grid, x: number, y: number, z: number, type: string) => Cell;
+
 export class Cell {
   public next?: string;
-  constructor(
-    public grid: Grid,
-    public x: number,
-    public y: number,
-    public z: number,
-    public type: string
-  ) {}
+  constructor(public grid: Grid, public x: number, public y: number, public z: number, public type: string) {}
 
   public visited = false;
   public tentativeDist = 9999;
@@ -36,12 +32,7 @@ export class Cell {
     this.east = this.getEast(createNeighbours);
     this.west = this.getWest(createNeighbours);
 
-    this.directNeighbours = [
-      this.north,
-      this.south,
-      this.east,
-      this.west,
-    ].filter((c) => !!c) as Cell[];
+    this.directNeighbours = [this.north, this.south, this.east, this.west].filter((c) => !!c) as Cell[];
 
     this.diagonalNeighbours = [
       this.getNorthWest(createNeighbours),
@@ -98,10 +89,12 @@ export class Cell {
     return `${this.code} @ ${this.coord}`;
   }
 
+  public toString(): string {
+    return this.label;
+  }
+
   public get kdInfo(): string {
-    const kd = this.knownDistances
-      .map((v: [Cell, number]) => `${v[1]} to ${v[0].coord}`)
-      .join("\n\t");
+    const kd = this.knownDistances.map((v: [Cell, number]) => `${v[1]} to ${v[0].coord}`).join("\n\t");
     return `${this.label} knows distances = \n\t${kd}`;
   }
 
@@ -132,6 +125,10 @@ export class Cell {
 
   public get isSpace(): boolean {
     return this.type === SPACE;
+  }
+
+  public get onBorder(): boolean {
+    return this.x == this.grid.maxX || this.x == this.grid.minX || this.y == this.grid.minY || this.y == this.grid.maxY;
   }
 
   public get isOn(): boolean {
