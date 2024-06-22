@@ -1,4 +1,4 @@
-import { Cell } from "./cell";
+import { Cell, CellCreator } from "./cell";
 import { WHITE } from ".";
 
 export class Grid {
@@ -19,13 +19,18 @@ export class Grid {
     return Array.from(this.lookup.values());
   }
 
-  public createCell(
-    x: number,
-    y: number,
-    z: number,
-    type: string
-  ): Cell | undefined {
-    return this.addCell(new Cell(this, x, y, z, type));
+  public get hash(): string {
+    return this.cells.map((c) => c.type).join("");
+  }
+
+  public reset(): void {
+    this.cells.forEach((c) => c.reset());
+  }
+
+  public createCell(x: number, y: number, z: number, type: string, cellCreator?: CellCreator): Cell | undefined {
+    const c = cellCreator ? cellCreator(this, x, y, z, type) : new Cell(this, x, y, z, type);
+
+    return this.addCell(c);
   }
 
   public addCell(c: Cell): Cell | undefined {
@@ -95,10 +100,7 @@ export class Grid {
     }
   }
 
-  public breadthFirst(
-    from: Cell,
-    getOpenNeighbours?: (c: Cell) => Cell[]
-  ): void {
+  public breadthFirst(from: Cell, getOpenNeighbours?: (c: Cell) => Cell[]): void {
     if (!getOpenNeighbours) {
       getOpenNeighbours = (c: Cell) => c.openNeighbours;
     }
@@ -107,6 +109,7 @@ export class Grid {
     while (unvisitedSet.length) {
       unvisitedSet.sort((a, b) => b.tentativeDist - a.tentativeDist);
       let c = unvisitedSet.pop() as Cell;
+      c.visited = true;
       for (const n of getOpenNeighbours(c)) {
         const d = c.tentativeDist + n.cost;
         if (d < n.tentativeDist) {
@@ -117,11 +120,7 @@ export class Grid {
     }
   }
 
-  public shortestPath(
-    from: Cell,
-    to: Cell,
-    getOpenNeighbours?: (c: Cell) => Cell[]
-  ): number {
+  public shortestPath(from: Cell, to: Cell, getOpenNeighbours?: (c: Cell) => Cell[]): number {
     if (!getOpenNeighbours) {
       getOpenNeighbours = (c: Cell) => c.openNeighbours;
     }
@@ -191,13 +190,13 @@ export class Grid {
     return [];
   }
 
-  public static fromLines(input: string | string[]): Grid {
+  public static fromLines(input: string | string[], cellCreator?: CellCreator): Grid {
     const lines = Array.isArray(input) ? input : input.split("\n");
 
     const g = new Grid();
     for (let y = 0; y < lines.length; y++) {
       for (let x = 0; x < lines[y].length; x++) {
-        g.createCell(x, y, 0, lines[y][x]);
+        g.createCell(x, y, 0, lines[y][x], cellCreator);
       }
     }
     return g.init();
