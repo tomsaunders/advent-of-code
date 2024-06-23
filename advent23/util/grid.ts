@@ -67,9 +67,18 @@ export class Grid {
     const RESET: string = "\x1b[0m";
 
     if (drawCoords) {
+      // draw two rows for the x headers
+      // every 10, print the leading digits on the first row
+      // and print the last digit on the second
+      // 0         1         2
+      // 0123456789012345678901234
       let xRow = `${YELLOW}   `;
       for (let x = this.minX; x <= this.maxX; x++) {
-        xRow += x % 10 === 0 ? Math.round(Math.abs(x) / 10) : " ";
+        // when the x coordinate goes into triple digits,
+        // the header will be in double digits,
+        // so don't add a spacer for the next character to preserve alignment
+        const spacerX = x > 99 && x % 10 === 1 ? "" : " ";
+        xRow += x % 10 === 0 ? Math.round(Math.abs(x) / 10) : spacerX;
       }
       xRow = `${xRow}${RESET}`;
       console.log(xRow);
@@ -81,9 +90,14 @@ export class Grid {
       console.log(xRow);
     }
 
+    const yPad = Math.max(this.maxY, Math.abs(this.minY)).toString().length;
     for (let y = this.minY; y <= this.maxY; y++) {
-      const yPos = y < 10 ? `0${Math.abs(y)}` : `${Math.abs(y)}`;
+      // if drawing coordinates, pad the y value according to the maximum number size
+      // before then drawing the rest of the row
+      const yStr = Math.abs(y).toString();
+      const yPos = yStr.padStart(yPad, "0");
       let line = drawCoords ? `${YELLOW}${yPos}${RESET} ` : "";
+
       for (let x = this.minX; x <= this.maxX; x++) {
         const c = `${x}:${y}:${z}`;
         const cell = this.lookup.get(c);
@@ -208,5 +222,18 @@ export class Grid {
       g.addCell(c.cloneToGrid(g));
     });
     return g.init();
+  }
+
+  public makeAllCells(): void {
+    for (let x = this.minX; x <= this.maxX; x++) {
+      for (let y = this.minY; y <= this.maxY; y++) {
+        this.getCell(x, y, 0, true);
+      }
+    }
+    for (let x = this.minX; x <= this.maxX; x++) {
+      for (let y = this.minY; y <= this.maxY; y++) {
+        this.getCell(x, y)?.init();
+      }
+    }
   }
 }
