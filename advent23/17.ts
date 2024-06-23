@@ -1,5 +1,16 @@
 #!/usr/bin/env ts-node
 import * as fs from "fs";
+/**
+ * Advent of Code 2023 - Day 18
+ *
+ * Summary: lowest-cost path finding algorithm for a graph with unusual rules about possible moves
+ * Escalation: trickier rules about possible moves
+ * Naive: Large search space
+ * Solution: a* algorithm, but calculate all possible moves from current space rather than just the first steps
+ * in each direction
+ *
+ * Keywords: a*, path finding, grid
+ */
 import { Cell, Direction, Grid, PURP, RED, RESET, SPACE, YELLOW, arrSum } from "./util";
 const input = fs.readFileSync("input17.txt", "utf8");
 const test = `2413432311323
