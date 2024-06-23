@@ -1,7 +1,7 @@
 export { Grid } from "./grid";
-import { Cell } from "./cell";
 export { Cell } from "./cell";
 
+export type Direction = "North" | "East" | "South" | "West" | "n" | "e" | "s" | "w";
 export const WALL: string = "#";
 export const SPACE: string = ".";
 export const ON: string = "#";
@@ -15,10 +15,7 @@ export const WHITE: string = "\x1b[37m";
 export const RESET: string = "\x1b[0m";
 
 export function test(a: any, b: any): void {
-  const o =
-    a == b
-      ? `${GREEN}Test pass = ${a}${RESET}`
-      : `${RED}!!Test fail got ${b} wanted ${a}${RESET}`;
+  const o = a == b ? `${GREEN}Test pass = ${a}${RESET}` : `${RED}!!Test fail got ${b} wanted ${a}${RESET}`;
   console.log(o);
 }
 
@@ -66,7 +63,7 @@ export function lcm(arr: number[]): number {
 }
 
 export function gcd(a: number, b: number): number {
-  if (b === 0){
+  if (b === 0) {
     return a;
   }
   return gcd(b, a % b);
@@ -74,4 +71,34 @@ export function gcd(a: number, b: number): number {
 
 export function lineToNumbers(line: string): number[] {
   return line.match(/([\-\d]+)/g)?.map(mapNum) as number[];
+}
+
+// https://en.wikipedia.org/wiki/Shoelace_formula
+export type XYCoord = [number, number];
+export function perimeter(coordinates: XYCoord[]): number {
+  let perimeter = 0;
+  for (let i = 1; i < coordinates.length; i++) {
+    let j = i - 1;
+    const [jx, jy] = coordinates[j];
+    const [ix, iy] = coordinates[i];
+    // assuming right angle grid lines and only one coordinate actually changing at a time that is
+    perimeter += Math.abs(iy - jy) + Math.abs(ix - jx);
+  }
+  return perimeter;
+}
+
+export function shoelaceArea(coordinates: XYCoord[]): number {
+  let area = 0;
+  for (let i = 1; i < coordinates.length; i++) {
+    let j = i - 1;
+    const [jx, jy] = coordinates[j];
+    const [ix, iy] = coordinates[i];
+    // shoelace is jx * iy - jy*ix
+    area += jx * iy - jy * ix;
+  }
+  return Math.abs(area / 2);
+}
+
+export function picksTheoremArea(interiorPoints: number, boundaryPoints: number): number {
+  return interiorPoints + boundaryPoints / 2 - 1;
 }

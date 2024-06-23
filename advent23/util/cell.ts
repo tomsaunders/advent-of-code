@@ -1,5 +1,5 @@
 import { Grid } from "./grid";
-import { RED, RESET, WHITE, WALL, SPACE, GREEN, ON, OFF } from ".";
+import { RED, RESET, WHITE, WALL, SPACE, GREEN, ON, OFF, Direction } from ".";
 
 export type CellCreator = (grid: Grid, x: number, y: number, z: number, type: string) => Cell;
 
@@ -158,6 +158,18 @@ export class Cell {
 
   public cloneToGrid(grid: Grid): Cell {
     return new Cell(grid, this.x, this.y, this.z, this.type);
+  }
+
+  public getDirection(direction: Direction, createNeighbours = false): Cell | undefined {
+    if (direction == "North" || direction === "n") {
+      return this.grid.getCell(this.x, this.y - 1, this.z, createNeighbours);
+    } else if (direction == "South" || direction === "s") {
+      return this.grid.getCell(this.x, this.y + 1, this.z, createNeighbours);
+    } else if (direction == "East" || direction === "e") {
+      return this.grid.getCell(this.x + 1, this.y, this.z, createNeighbours);
+    } else if (direction == "West" || direction === "w") {
+      return this.grid.getCell(this.x - 1, this.y, this.z, createNeighbours);
+    }
   }
 
   public getNorth(createNeighbours = false): Cell | undefined {
