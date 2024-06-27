@@ -4,7 +4,7 @@ import { RED, RESET, WHITE, WALL, SPACE, GREEN, ON, OFF, Direction } from ".";
 export type CellCreator = (grid: Grid, x: number, y: number, z: number, type: string) => Cell;
 
 export class Cell {
-  public next?: string;
+  public reference?: string;
   constructor(public grid: Grid, public x: number, public y: number, public z: number, public type: string) {}
 
   public visited = false;
