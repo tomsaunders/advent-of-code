@@ -1,5 +1,4 @@
 export { Grid } from "./grid";
-import { Cell } from "./cell";
 export { Cell } from "./cell";
 
 export const WALL: string = "#";
@@ -15,10 +14,7 @@ export const WHITE: string = "\x1b[37m";
 export const RESET: string = "\x1b[0m";
 
 export function test(a: any, b: any): void {
-  const o =
-    a == b
-      ? `${GREEN}Test pass = ${a}${RESET}`
-      : `${RED}!!Test fail got ${b} wanted ${a}${RESET}`;
+  const o = a == b ? `${GREEN}Test pass = ${a}${RESET}` : `${RED}!!Test fail got ${b} wanted ${a}${RESET}`;
   console.log(o);
 }
 
