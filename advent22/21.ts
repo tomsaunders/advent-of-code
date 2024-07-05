@@ -1,6 +1,17 @@
 #!/usr/bin/env ts-node
+/**
+ * Advent of Code 2022 - Day 21
+ *
+ * Summary: Evaluate a series of mathematical operations ('monkeys') by starting from the known values and subbing them in to other expressions until reaching the root
+ * Escalation: Change the calculation and find the input that gives a particular output
+ * Solution:
+ *  1: loop through the monkeys to see if they can be evaluated fully - if so sub into any other matching monkeys, loop until the record does not change size (is fully reduced)
+ *  2: reduce the record as much as possible (til one root side is a number), then solve as an algebraic equation until only the input and output are left
+ *
+ * Keywords: eval, dependency chain, algebra
+ * References:
+ */
 import * as fs from "fs";
-import { arrSum, Grid } from "./util";
 const input = fs.readFileSync("input21.txt", "utf8");
 
 const test = `root: pppw + sjmn
@@ -19,57 +30,113 @@ lgvd: ljgn * ptdq
 drzm: hmdt - zczc
 hmdt: 32`;
 
-function parse(input: string): Record<string, string> {
-  const map: Record<string, string> = {};
-  input
-    .split("\n")
-    .map((l) => l.split(": "))
-    .forEach(([key, op]) => {
-      const num = parseInt(op, 10);
-      map[key] = op;
-    });
-  return map;
+type Monkeys = Record<string, string>;
+function parseInput(input: string): Monkeys {
+  const monkeyMap: Monkeys = {};
+  input.split("\n").forEach((line) => {
+    const [key, op] = line.split(": ");
+    monkeyMap[key] = op;
+  });
+  return monkeyMap;
 }
 
-function eeval(op: string): string | number {
+function eeval(op: string): number {
   const bits = op.split(" ") as any[];
-  bits[0] = parseInt(bits[0], 10);
-  if (bits.length === 1) {
-    return parseInt(bits[0], 10);
+  const firstOperand = parseInt(bits[0]);
+  // if a single number, return
+  if (!isNaN(firstOperand) && bits.length === 1) {
+    return firstOperand;
   }
-  bits[2] = parseInt(bits[2], 10);
-  if (!isNaN(bits[0]) && !isNaN(bits[2])) {
-    return eval(op);
+  const secondOperand = parseInt(bits[2]);
+  // if both sides are numbers, we can eval them
+  // else this isn't yet able to be processed and we return NaN
+  if (!isNaN(firstOperand) && !isNaN(secondOperand)) {
+    return eval(op) as number;
   } else {
     return NaN;
   }
 }
 
-function part1(input: string): number {
-  const monkeys = parse(input);
-  let root = -1;
-  while (root === -1) {
-    Object.keys(monkeys).forEach((key) => {
+function reduceMonkeys(monkeys: Monkeys): Monkeys {
+  let size = 0;
+  let keys = Object.keys(monkeys);
+  while (keys.length !== size) {
+    size = keys.length;
+    keys.forEach((key) => {
       const op = monkeys[key];
       const num = eeval(op as string);
       if (!isNaN(num as number)) {
-        if (key === "root") root = num as number;
-        Object.keys(monkeys).forEach((key2) => {
-          if (monkeys[key2].includes(key)) {
-            monkeys[key2] = monkeys[key2].replace(key, num.toString());
+        monkeys[key] = num.toString();
+        Object.keys(monkeys).forEach((otherKey) => {
+          if (otherKey !== key && monkeys[otherKey].includes(key)) {
+            monkeys[otherKey] = monkeys[otherKey].replace(key, monkeys[key]);
           }
         });
-        delete monkeys[key];
+        if (key !== "root") delete monkeys[key];
       }
     });
+    keys = Object.keys(monkeys);
   }
+  return monkeys;
+}
 
-  return root;
+function part1(input: string): number {
+  const monkeys = parseInput(input);
+  reduceMonkeys(monkeys);
+  return parseInt(monkeys["root"]);
 }
 
 function part2(input: string): number {
-  const grid = parse(input);
-  return 0;
+  const monkeys = parseInput(input);
+  monkeys["root"] = monkeys["root"].replace(" + ", " = "); //
+  monkeys["humn"] = "X"; // override to string constant that cannot be eval'd
+  reduceMonkeys(monkeys);
+
+  // after reducing, we should have something like root: abcd = 999
+  // so we build an algebraic expander
+  // if abcd: efgh - 1
+  // after one step then root becomes efgh = 1000
+
+  // loop until the only two keys left are root and humn
+  while (Object.keys(monkeys).length > 2) {
+    let [lhs, rhs] = monkeys["root"].split(" = ");
+    const rootNum = parseInt(rhs);
+    console.log(monkeys[lhs], "=", rhs);
+    const [first, op, second] = monkeys[lhs].split(" ");
+    // either first or second is a number
+
+    delete monkeys[lhs];
+    if (isNaN(parseInt(first))) {
+      lhs = first;
+      const num = parseInt(second);
+      // first is a key, second is a number
+      if (op === "/") {
+        rhs = `${rootNum * num}`;
+      } else if (op === "*") {
+        rhs = `${rootNum / num}`;
+      } else if (op === "-") {
+        rhs = `${rootNum + num}`;
+      } else if (op === "+") {
+        rhs = `${rootNum - num}`;
+      }
+    } else if (isNaN(parseInt(second))) {
+      // second is a key, first is a number
+      lhs = second;
+      const num = parseInt(first);
+      if (op === "/") {
+        rhs = `${num / rootNum}`;
+      } else if (op === "*") {
+        rhs = `${rootNum / num}`;
+      } else if (op === "-") {
+        rhs = `${num - rootNum}`;
+      } else if (op === "+") {
+        rhs = `${rootNum - num}`;
+      }
+    }
+
+    monkeys["root"] = `${lhs} = ${rhs}`;
+  }
+  return parseInt(monkeys["root"].replace("humn =", ""));
 }
 
 const t1 = part1(test);
