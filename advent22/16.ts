@@ -1,4 +1,16 @@
 #!/usr/bin/env ts-node
+/**
+ * Advent of Code 2022 - Day 16
+ *
+ * Summary: Given a graph of tunnels connecting 'valves' which increase air flow rate, over 30 steps what is the most amount of air that can be linked
+ * Escalation: Add a second actor to move in parallel, exponentially increasing the search space
+ * Naive:  Optimise the graph to remove pointless nodes, take each step by step traversing the graph
+ * Solution: 1. Combine the valve turn on and the move cost into a single option. Calculate from each node the options it has to reach all other point scoring nodes
+ *  2. n^2 the complexity by adding a second actor. Finishes within a minute but clearly could be optimised.
+ *
+ * Keywords: Graph, BFS, Path Finding
+ * References:
+ */
 import * as fs from "fs";
 const input = fs.readFileSync("input16.txt", "utf8");
 
@@ -23,6 +35,7 @@ class Valve {
   public flowRate: number;
   public tunnels: string[] = [];
   public connections: Option[] = [];
+  public options: Record<string, number> = {};
 
   constructor(public line: string) {
     line = line.replace("rate=", "").replace(";", "");
@@ -40,9 +53,17 @@ class Valve {
       this.connections.push(option);
     }
   }
+
+  public addOption(option: Option): void {
+    this.options[option.valve.name] = option.cost;
+  }
+
+  public isBetterOption(option: Option): boolean {
+    return option.cost < (this.options[option.valve.name] || Infinity);
+  }
 }
 
-function parse(input: string): Record<string, Valve> {
+function parseInput(input: string): Record<string, Valve> {
   const valves = input.split("\n").map((l) => new Valve(l));
   const map: Record<string, Valve> = {};
 
@@ -60,12 +81,9 @@ function parse(input: string): Record<string, Valve> {
   valves
     .filter((v) => v.flowRate === 0)
     .forEach((zeroValve) => {
-      console.log(`valve ${zeroValve.name} is pointless, removing`);
       // remove self from connections
       zeroValve.connections.forEach((c) => {
-        c.valve.connections = c.valve.connections.filter(
-          (cc) => cc.valve !== zeroValve
-        );
+        c.valve.connections = c.valve.connections.filter((cc) => cc.valve !== zeroValve);
       });
       zeroValve.connections.forEach((a) => {
         zeroValve.connections.forEach((b) => {
@@ -83,226 +101,124 @@ function parse(input: string): Record<string, Valve> {
       });
     });
 
-  console.log("optimised map");
-  Object.values(map).forEach((v) => {
-    console.log("valve ", v.name);
-    v.connections.forEach((c) => {
-      console.log("- tunnel", c.valve.name, c.cost);
-    });
+  valves.forEach((v) => {
+    function visitAllNodes(from: Valve, currentCost: number) {
+      from.connections.forEach((connection) => {
+        const moveCost = currentCost + connection.cost;
+        const option: Option = { cost: moveCost + 1, valve: connection.valve }; // add one for the cost of turning on the valve
+
+        if (v.isBetterOption(option)) {
+          v.addOption(option);
+          visitAllNodes(connection.valve, moveCost);
+        }
+      });
+    }
+    //bfs from the valve
+    visitAllNodes(v, 0);
   });
+
   return map;
 }
 
-interface Game {
-  valveState: Record<string, number>;
-  currentValve: string;
-  elephantValve?: string;
-  lastValve: string;
-  lastElephantValve?: string;
-  totalPressure: number;
-  timeRemaining: number;
-  elephantTimeRemaining?: number;
-}
-
 function part1(input: string): number {
-  const valves = parse(input);
+  const valves = parseInput(input);
   const timeLimit = 30;
-
-  const options: Game[] = [
-    {
-      valveState: {},
-      currentValve: "AA",
-      lastValve: "",
-      totalPressure: 0,
-      timeRemaining: timeLimit,
-    },
-  ];
-  let max = 0;
-
-  const seen: Set<string> = new Set<string>();
-
-  const addOption = (g: Game): void => {
-    const hash = g.currentValve + "@" + g.timeRemaining + "@" + g.totalPressure;
-
-    if (!seen.has(hash)) {
-      options.push(g);
-      seen.add(hash);
-    }
-  };
-
-  while (options.length) {
-    options.sort((a, b) =>
-      b.totalPressure === a.totalPressure
-        ? a.timeRemaining - b.timeRemaining
-        : b.totalPressure - a.totalPressure
-    );
-    const game: Game = options.shift() as Game;
-    // console.log(`${options.length} options, `, max, game);
-
-    if (game.timeRemaining > 0) {
-      const atValve = valves[game.currentValve];
-
-      // possible moves are turn valve on, or move to neighbour.
-      if (!game.valveState[atValve.name] && atValve.flowRate > 0) {
-        const nextTime = game.timeRemaining - 1;
-        // turn on - current valve is not open and could be useful
-        addOption({
-          valveState: {
-            ...game.valveState,
-            [game.currentValve]: valves[game.currentValve].flowRate,
-          },
-          currentValve: game.currentValve,
-          lastValve: "",
-          totalPressure: game.totalPressure + atValve.flowRate * nextTime,
-          timeRemaining: nextTime,
-        });
-      }
-      // move to neighbour
-      atValve.connections.forEach((c) => {
-        if (c.valve.name !== game.lastValve) {
-          addOption({
-            valveState: { ...game.valveState },
-            currentValve: c.valve.name,
-            lastValve: game.currentValve,
-            totalPressure: game.totalPressure,
-            timeRemaining: game.timeRemaining - c.cost,
-          });
-        }
-      });
-    }
-    if (game.totalPressure > max) {
-      max = Math.max(max, game.totalPressure);
-      // console.log("-new max", max);
-    }
+  interface PathOption {
+    timeRemaining: number;
+    totalPressure: number;
+    path: string[];
   }
 
-  console.log(`found ${max} after ${seen.size}`);
-  return max;
+  const paths: PathOption[] = [{ timeRemaining: timeLimit, path: ["AA"], totalPressure: 0 }];
+  let best = 0;
+  while (paths.length) {
+    const progress = paths.pop() as PathOption;
+    if (progress.totalPressure > best) {
+      best = progress.totalPressure;
+    }
+
+    const current = progress.path[0];
+    const valve = valves[current] as Valve;
+
+    Object.entries(valve.options).forEach(([optionKey, optionCost]) => {
+      const optionValve = valves[optionKey];
+      const timeRemaining = progress.timeRemaining - optionCost;
+
+      if (timeRemaining >= 0 && !progress.path.includes(optionKey)) {
+        const totalPressure = progress.totalPressure + timeRemaining * optionValve.flowRate;
+        const path = [optionKey];
+        path.push(...progress.path);
+        paths.push({ timeRemaining, totalPressure, path });
+      }
+    });
+  }
+
+  return best;
 }
 
 function part2(input: string): number {
-  const valves = parse(input);
+  const valves = parseInput(input);
   const timeLimit = 26;
-
-  const options: Game[] = [
-    {
-      valveState: {},
-      currentValve: "AA",
-      elephantValve: "AA",
-      lastValve: "",
-      lastElephantValve: "",
-      totalPressure: 0,
-      timeRemaining: timeLimit,
-      elephantTimeRemaining: timeLimit,
-    },
-  ];
-  let max = 0;
-
-  const seen: Set<string> = new Set<string>();
-
-  const addOption = (g: Game): void => {
-    let hash = g.currentValve + "@" + g.timeRemaining + "@" + g.totalPressure;
-    hash += "@" + g.elephantValve + "@" + g.elephantTimeRemaining;
-
-    if (!seen.has(hash)) {
-      options.push(g);
-      seen.add(hash);
-    }
-  };
-
-  while (options.length) {
-    options.sort((a, b) =>
-      b.totalPressure === a.totalPressure
-        ? a.timeRemaining - b.timeRemaining
-        : b.totalPressure - a.totalPressure
-    );
-    const game: Game = options.shift() as Game;
-    // console.log(`${options.length} options, `, max, game);
-
-    if (game.timeRemaining > 0) {
-      const atValve = valves[game.currentValve];
-
-      // possible moves are turn valve on, or move to neighbour.
-      if (!game.valveState[atValve.name] && atValve.flowRate > 0) {
-        const nextTime = game.timeRemaining - 1;
-        // turn on - current valve is not open and could be useful
-        addOption({
-          valveState: {
-            ...game.valveState,
-            [atValve.name]: atValve.flowRate,
-          },
-          currentValve: game.currentValve,
-          lastValve: "",
-          totalPressure: game.totalPressure + atValve.flowRate * nextTime,
-          timeRemaining: nextTime,
-        });
-      }
-      // move to neighbour
-      atValve.connections.forEach((c) => {
-        if (c.valve.name !== game.lastValve) {
-          addOption({
-            valveState: { ...game.valveState },
-            currentValve: c.valve.name,
-            lastValve: game.currentValve,
-            totalPressure: game.totalPressure,
-            timeRemaining: game.timeRemaining - c.cost,
-          });
-        }
-      });
-    }
-    if (game.elephantTimeRemaining! > 0) {
-      const atValve = valves[game.elephantValve!];
-
-      // possible moves are turn valve on, or move to neighbour.
-      if (!game.valveState[atValve.name] && atValve.flowRate > 0) {
-        const nextTime = game.elephantTimeRemaining! - 1;
-        // turn on - current valve is not open and could be useful
-        addOption({
-          valveState: {
-            ...game.valveState,
-            [atValve.name]: atValve.flowRate,
-          },
-          currentValve: game.currentValve,
-          lastValve: game.lastValve,
-          elephantValve: game.elephantValve,
-          lastElephantValve: "",
-          totalPressure: game.totalPressure + atValve.flowRate * nextTime,
-          timeRemaining: game.timeRemaining,
-          elephantTimeRemaining: nextTime,
-        });
-      }
-      // move to neighbour
-      atValve.connections.forEach((c) => {
-        if (c.valve.name !== game.lastElephantValve) {
-          addOption({
-            valveState: { ...game.valveState },
-            currentValve: game.currentValve,
-            lastValve: game.lastValve,
-            elephantValve: c.valve.name,
-            lastElephantValve: game.elephantValve!,
-            totalPressure: game.totalPressure,
-            timeRemaining: game.timeRemaining,
-            elephantTimeRemaining: game.elephantTimeRemaining! - c.cost,
-          });
-        }
-      });
-    }
-    if (game.totalPressure > max) {
-      max = Math.max(max, game.totalPressure);
-      // console.log("-new max", max);
-    }
+  interface PathOption {
+    aTimeRem: number;
+    bTimeRem: number;
+    totalPressure: number;
+    aPath: string[];
+    bPath: string[];
   }
 
-  console.log(`found ${max} after ${seen.size}`);
-  return max;
+  const paths: PathOption[] = [
+    { aTimeRem: timeLimit, bTimeRem: timeLimit, aPath: ["AA"], bPath: ["AA"], totalPressure: 0 },
+  ];
+  let best = 0;
+  while (paths.length) {
+    const progress = paths.pop() as PathOption;
+    if (progress.totalPressure > best) {
+      best = progress.totalPressure;
+    }
+
+    const currentA = progress.aPath[0];
+    const valveA = valves[currentA] as Valve;
+    const currentB = progress.bPath[0];
+    const valveB = valves[currentB] as Valve;
+
+    Object.entries(valveA.options).forEach(([optionKeyA, optionCostA]) => {
+      const optionValveA = valves[optionKeyA];
+      const aTimeRem = progress.aTimeRem - optionCostA;
+
+      if (aTimeRem >= 0 && !progress.aPath.includes(optionKeyA) && !progress.bPath.includes(optionKeyA)) {
+        const totalPressureA = progress.totalPressure + aTimeRem * optionValveA.flowRate;
+        const aPath = progress.aPath.slice(0);
+        aPath.unshift(optionKeyA);
+
+        Object.entries(valveB.options).forEach(([optionKeyB, optionCostB]) => {
+          const optionValveB = valves[optionKeyB];
+          const bTimeRem = progress.bTimeRem - optionCostB;
+          if (
+            optionKeyA !== optionKeyB &&
+            bTimeRem >= 0 &&
+            !progress.aPath.includes(optionKeyB) &&
+            !progress.bPath.includes(optionKeyB)
+          ) {
+            const bPath = progress.bPath.slice(0);
+            bPath.unshift(optionKeyB);
+            const totalPressure = totalPressureA + bTimeRem * optionValveB.flowRate;
+            paths.push({ aTimeRem, aPath, bTimeRem, bPath, totalPressure });
+          }
+        });
+      }
+    });
+  }
+
+  return best;
 }
 
 const t1 = part1(test);
 if (t1 === 1651) {
-  console.log("Part 1: ", part1(input));
+  console.log("Part 1: ", part1(input)); // 2265
   const t2 = part2(test);
   if (t2 === 1707) {
-    console.log("Part 2: ", part2(input));
+    console.log("Part 2: ", part2(input)); // 2811
   } else {
     console.log("Test2 fail: ", t2);
   }
