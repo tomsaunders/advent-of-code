@@ -2,16 +2,15 @@
 /**
  * Advent of Code 2017 - Day 11
  *
- * Summary: Grid traversal in a hexagonal shape
- * Escalation:
- * Solution:
+ * Summary: Grid traversal in a hexagonal shape - calculate steps to origin
+ * Escalation: Easy - max distance rather than end distance
+ * Solution: Use the coordinate system from the reference link to handle hexagonal distance logic
  *
  *
- * Keywords:
- * References: N/A
+ * Keywords: Grid
+ * References: https://www.redblobgames.com/grids/hexagons/
  */
 import * as fs from "fs";
-import { mapNum } from "./util";
 const input = fs.readFileSync("input11.txt", "utf8");
 const test: Record<string, number> = {
   "ne,ne,ne": 3,

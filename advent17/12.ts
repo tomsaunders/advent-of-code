@@ -3,8 +3,9 @@
  * Advent of Code 2017 - Day 12
  *
  * Summary: Parse input into a graph and count connected nodes
- * Escalation:
+ * Escalation: Count number of distinct node groups
  * Solution: Parse connections and do a breadth first search from root
+ *  Part 2 - loop until every node has been visited
  *
  *
  * Keywords:
