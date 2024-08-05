@@ -212,7 +212,7 @@ export class Cell {
     return this.grid.getCell(this.x, this.y, this.z - 1, createNeighbours);
   }
 
-  public getNext(dx: number, dy: number): Cell | undefined {
-    return this.grid.getCell(this.x + dx, this.y + dy);
+  public getNext(dx: number, dy: number, createNeighbours = false): Cell | undefined {
+    return this.grid.getCell(this.x + dx, this.y + dy, this.z, createNeighbours);
   }
 }
