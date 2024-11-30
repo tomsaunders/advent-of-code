@@ -1,4 +1,15 @@
 #!/usr/bin/env ts-node
+/**
+ * Advent of Code 2018 - Day 17
+ * Completed in 2018 and updated 6 years later...
+ *
+ * Summary:
+ * Escalation:
+ * Solution:
+ *
+ * Keywords: Easy
+ * References: N/A
+ */
 import * as fs from "fs";
 const input = fs.readFileSync("input17.txt", "utf8");
 const test = `x=495, y=2..7
@@ -15,8 +26,6 @@ const OPEN = " ";
 const WATER = "~";
 const DRIP = "|";
 const SPRING = "+";
-
-const lines = input.split("\n");
 
 class Map {
   public grid: string[][];
@@ -64,7 +73,7 @@ class Map {
     }
   }
 
-  public print() {
+  public print(): number {
     let out = [];
     let wcount = 0;
     let dcount = 0;
@@ -86,6 +95,7 @@ class Map {
     console.log(out.join("\n"));
     console.log(`${wcount + dcount}`);
     console.log(`${wcount}`);
+    return wcount + dcount;
   }
 }
 
@@ -135,10 +145,7 @@ class WaterPath {
   public constructor(public x: number, public y: number, private map: Map) {}
 
   public run(): Coord[] {
-    while (
-      (this.down === OPEN || this.down === DRIP) &&
-      this.y < this.map.maxY
-    ) {
+    while ((this.down === OPEN || this.down === DRIP) && this.y < this.map.maxY) {
       this.y++;
       this.drip();
       this.rightWall = this.leftWall = false;
@@ -189,36 +196,89 @@ class WaterPath {
   }
 }
 
-const spring: Coord = [500, 0];
-const [sx, sy] = spring;
-const map = new Map(650, 2000, lines);
-map.grid[sy][sx] = SPRING;
+// 31955 too high
 
-const stack: Coord[] = [];
-stack.push(spring);
+function parseInput(input: string): [Map, Coord] {
+  const lines = input.split("\n");
+  const spring: Coord = [500, 0];
+  const [sx, sy] = spring;
+  const map = new Map(650, 2000, lines);
+  map.grid[sy][sx] = SPRING;
 
-const seen: Set<string> = new Set<string>();
-
-while (stack.length && stack.length < 55) {
-  const coord = stack.shift()!!;
-  let k = coord.join(":");
-  if (seen.has(k)) {
-    continue;
-  }
-  seen.add(k);
-
-  // console.log(`Processing path ${coord[0]},${coord[1]} stack ${stack.length}`);
-  const w = new WaterPath(coord[0], coord[1], map);
-  const ret = w.run();
-  for (const r of ret) {
-    const [rx, ry] = r;
-    k = r.join(":");
-    if (ry < map.maxY && !seen.has(k)) {
-      // console.log(`Adding path ${k}`);
-      stack.push(r);
-    }
-  }
+  return [map, spring];
 }
 
-map.print();
-// 31955 too high
+function part1(input: string): number {
+  const [map, spring] = parseInput(input);
+  const stack: Coord[] = [];
+  stack.push(spring);
+
+  const seen: Set<string> = new Set<string>();
+
+  while (stack.length && stack.length < 55) {
+    const coord = stack.shift()!!;
+    let k = coord.join(":");
+    if (seen.has(k)) {
+      continue;
+    }
+    seen.add(k);
+
+    // console.log(`Processing path ${coord[0]},${coord[1]} stack ${stack.length}`);
+    const w = new WaterPath(coord[0], coord[1], map);
+    const ret = w.run();
+    for (const r of ret) {
+      const [rx, ry] = r;
+      k = r.join(":");
+      if (ry < map.maxY && !seen.has(k)) {
+        // console.log(`Adding path ${k}`);
+        stack.push(r);
+      }
+    }
+  }
+
+  return map.print();
+}
+
+function part2(input: string): number {
+  const [map, spring] = parseInput(input);
+  const stack: Coord[] = [];
+  stack.push(spring);
+
+  const seen: Set<string> = new Set<string>();
+
+  while (stack.length && stack.length < 55) {
+    const coord = stack.shift()!!;
+    let k = coord.join(":");
+    if (seen.has(k)) {
+      continue;
+    }
+    seen.add(k);
+
+    // console.log(`Processing path ${coord[0]},${coord[1]} stack ${stack.length}`);
+    const w = new WaterPath(coord[0], coord[1], map);
+    const ret = w.run();
+    for (const r of ret) {
+      const [rx, ry] = r;
+      k = r.join(":");
+      if (ry < map.maxY && !seen.has(k)) {
+        // console.log(`Adding path ${k}`);
+        stack.push(r);
+      }
+    }
+  }
+
+  return map.print();
+}
+
+const t = part1(test);
+if (t === 57) {
+  console.log("part 1 answer", part1(input));
+  const t2 = part2(test);
+  if (t2 === 1) {
+    console.log("part 2 answer", part2(input));
+  } else {
+    console.log("part 2 test fail", t2);
+  }
+} else {
+  console.log("part 1 test fail", t);
+}
