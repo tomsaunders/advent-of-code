@@ -62,7 +62,7 @@ function areaFromCoordinatesAndPerimeter(coordinates: XYCoord[]): number {
   return area + 1 + boundary / 2;
 }
 
-function part1b(input: string): number {
+function part1(input: string): number {
   const lines = input.split("\n");
   // parse input into an array of coordinates
   const vectMap: Record<string, XYCoord> = {
@@ -116,9 +116,9 @@ function part2(input: string): number {
   return areaFromCoordinatesAndPerimeter(coordinates);
 }
 
-const t = part1b(test);
+const t = part1(test);
 if (t == 62) {
-  console.log("part 1 answer", part1b(input));
+  console.log("part 1 answer", part1(input));
   const t2 = part2(test);
   if (t2 == 952408144115) {
     console.log("part 2 answer", part2(input));
