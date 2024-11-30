@@ -1,4 +1,15 @@
 #!/usr/bin/env ts-node
+/**
+ * Advent of Code 2022 - Day 19
+ *
+ * Summary: Given factory blueprints' that create mining robots from mined resources, work out the most mining that can happen in time t
+ * Escalation: Increase t
+ * Naive:  Simulate every possible move (build robot 1 2 3 or 4, or wait til more resources are found) for every minute
+ * Solution: Reduce the search space by only taking efficient options. The crucial logic was abandoning a branch when it had no possibility of beating the best option
+ *
+ * Keywords: Permutations
+ * References: reddit
+ */
 import * as fs from "fs";
 import { arrSum, arrProd } from "./util";
 const input = fs.readFileSync("input19.txt", "utf8");
@@ -23,22 +34,9 @@ class Blueprint {
       .split(" ")
       .map((b) => parseInt(b, 10))
       .filter((n) => !isNaN(n));
-    [
-      this.id,
-      this.oreCost,
-      this.clyCost,
-      this.obsOreCost,
-      this.obsClyCost,
-      this.geoOreCost,
-      this.geoObsCost,
-    ] = bits;
+    [this.id, this.oreCost, this.clyCost, this.obsOreCost, this.obsClyCost, this.geoOreCost, this.geoObsCost] = bits;
 
-    this.maxOreCost = Math.max(
-      this.oreCost,
-      this.clyCost,
-      this.geoOreCost,
-      this.obsOreCost
-    );
+    this.maxOreCost = Math.max(this.oreCost, this.clyCost, this.geoOreCost, this.obsOreCost);
   }
 
   public get qualityLevel(): number {
@@ -57,6 +55,30 @@ interface State {
   turn: number;
 }
 
+const TURN = 0;
+const ORE_COUNT = 1;
+const CLY_COUNT = 2;
+const OBS_COUNT = 3;
+const GEO_COUNT = 4;
+const ORE_BOTS = 5;
+const CLY_BOTS = 6;
+const OBS_BOTS = 7;
+const GEO_BOTS = 8;
+
+type StateArray = [number, number, number, number, number, number, number, number, number];
+const sortOrder = [GEO_COUNT, OBS_COUNT, CLY_COUNT, ORE_COUNT];
+function sortQ(a: StateArray, b: StateArray): number {
+  for (let i = 0; i < sortOrder.length; i++) {
+    const k = sortOrder[i];
+    const A = a[k];
+    const B = b[k];
+    if (A != B) {
+      return A - B;
+    }
+  }
+  return 0;
+}
+
 function sortQueue(a: State, b: State): number {
   if (a.geoCount === b.geoCount) {
     if (a.obsBots === b.obsBots) {
@@ -69,53 +91,60 @@ function sortQueue(a: State, b: State): number {
   }
 }
 
-function calculateMaxGeode(b: Blueprint, TIME_LIMIT = 24): void {
-  const hash: Set<string> = new Set<string>();
-  const queue: State[] = [
-    {
-      oreBots: 1,
-      oreCount: 0,
-      clyBots: 0,
-      clyCount: 0,
-      obsBots: 0,
-      obsCount: 0,
-      geoCount: 0,
-      turn: 0,
-    },
-  ];
+function calculateMaxGeode2(b: Blueprint, timeLimit: number = 24): void {
+  const hashes: Set<string>[] = new Array(timeLimit + 2).fill("").map((x) => new Set<string>());
+  // const hashes: Record<string, true> = {};
+  const queue: StateArray[] = [[0, 0, 0, 0, 0, 1, 0, 0, 0]];
 
-  const addQueue = (newState: State): void => {
-    const str = JSON.stringify(newState);
-    if (!hash.has(str) && newState.turn <= TIME_LIMIT) {
+  const addQueue = (newState: StateArray): void => {
+    // const [turns, oreCount, clayCount, obsidianCount, geodeCount, oreBots, clayBots, obsidianBots, geodeBots] =
+    //   newState;
+    const hash = hashes[newState[TURN]] as Set<string>;
+    const str = newState.join(":");
+    if (newState[TURN] <= timeLimit && !hash.has(str)) {
       queue.push(newState);
-      queue.sort(sortQueue);
+      queue.sort(sortQ);
       hash.add(str);
     }
   };
 
-  const nextState = (currentState: State, afterTurns: number = 1): State => {
-    const next = { ...currentState };
+  const nextState = (currentState: StateArray, afterTurns: number = 1): StateArray => {
+    const next = currentState.slice(0) as StateArray;
 
     afterTurns = Math.max(afterTurns, 1);
 
-    next.oreCount += currentState.oreBots * afterTurns;
-    next.obsCount += currentState.obsBots * afterTurns;
-    next.clyCount += currentState.clyBots * afterTurns;
-    next.turn += afterTurns;
+    next[ORE_COUNT] += currentState[ORE_BOTS] * afterTurns;
+    next[OBS_COUNT] += currentState[OBS_BOTS] * afterTurns;
+    next[CLY_COUNT] += currentState[CLY_BOTS] * afterTurns;
+    next[TURN] += afterTurns;
     return next;
   };
+
+  const triangles = [0];
+  for (let i = 0; i < timeLimit; i++) {
+    triangles.push(triangles.length + triangles[triangles.length - 1]);
+  }
 
   let max = 0;
   let c = 0;
   while (queue.length) {
     c++;
-    const current = queue.shift() as State;
+    const current = queue.pop() as StateArray;
+    const [turns, oreCount, clayCount, obsidianCount, geodeCount, oreBots, clayBots, obsidianBots, geodeBots] = current;
 
-    if (current.turn > TIME_LIMIT) {
+    max = Math.max(max, geodeCount);
+    if (turns === timeLimit) {
+      // do nothing we done.
       continue;
-    } else if (current.geoCount > max) {
-      max = current.geoCount;
-      console.log(c, queue.length, max, current);
+    }
+    const timeRemaining = timeLimit - turns; // the best possible outcome of this branch is we build a geode robot on every remaining step
+    // 1 - build, no geo
+    // 2 - build, 1 geo
+    // 3 - build, 1 geo & build, 2 geo = 3
+    // 4 - build, 1 geo & build, 2 geo & build, 3 geo = 6 ... triangle sequence
+    const bestPossibleGeodesRem = triangles[timeRemaining - 1];
+    if (geodeCount + bestPossibleGeodesRem <= max) {
+      continue; // abort
     }
 
     // 5 options - build ore, clay, obsidian or geode... or wait to the end.
@@ -124,44 +153,33 @@ function calculateMaxGeode(b: Blueprint, TIME_LIMIT = 24): void {
 
     // have the resources from the start for ore robots
     // should only build an ore bot when bots < max ore cost of something
-    if (current.oreBots < b.maxOreCost) {
-      const timeTilBuild = Math.ceil(
-        (b.oreCost - current.oreCount) / current.oreBots
-      );
+    if (oreBots < b.maxOreCost) {
+      const timeTilBuild = Math.ceil((b.oreCost - oreCount) / oreBots);
       const newOre = nextState(current, timeTilBuild + 1);
-      newOre.oreCount -= b.oreCost;
-      newOre.oreBots++;
+      newOre[ORE_COUNT] -= b.oreCost;
+      newOre[ORE_BOTS]++;
       addQueue(newOre);
     }
 
     // should only build clay bot when fewer clay bots than the clay cost of an obsidian bot
-    if (current.clyBots < b.obsClyCost) {
-      const timeTilBuild = Math.ceil(
-        (b.clyCost - current.oreCount) / current.oreBots
-      );
+    if (clayBots < b.obsClyCost) {
+      const timeTilBuild = Math.ceil((b.clyCost - oreCount) / oreBots);
       const newCly = nextState(current, timeTilBuild + 1);
-      newCly.oreCount -= b.clyCost;
-      newCly.clyBots++;
+      newCly[ORE_COUNT] -= b.clyCost;
+      newCly[CLY_BOTS]++;
       addQueue(newCly);
     }
 
     // should only build an obsidian bot when there are fewer than the obsidian cost of a geode bot
     // and CAN only build if a cly bot exists
-    if (current.obsBots < b.geoObsCost && current.clyBots) {
-      const timeTilBuildClay = Math.ceil(
-        (b.obsClyCost - current.clyCount) / current.clyBots
-      );
-      const timeTilBuildOre = Math.ceil(
-        (b.obsOreCost - current.oreCount) / current.oreBots
-      );
+    if (obsidianBots < b.geoObsCost && clayBots) {
+      const timeTilBuildClay = Math.ceil((b.obsClyCost - clayCount) / clayBots);
+      const timeTilBuildOre = Math.ceil((b.obsOreCost - oreCount) / oreBots);
       // have to wait til both clay and ore counts are appropriate
-      const newObs = nextState(
-        current,
-        Math.max(timeTilBuildOre, timeTilBuildClay) + 1
-      );
-      newObs.oreCount -= b.obsOreCost;
-      newObs.clyCount -= b.obsClyCost;
-      newObs.obsBots++;
+      const newObs = nextState(current, Math.max(timeTilBuildOre, timeTilBuildClay) + 1);
+      newObs[ORE_COUNT] -= b.obsOreCost;
+      newObs[CLY_COUNT] -= b.obsClyCost;
+      newObs[OBS_BOTS]++;
       // console.log(
       //   "from ",
       //   current,
@@ -175,55 +193,42 @@ function calculateMaxGeode(b: Blueprint, TIME_LIMIT = 24): void {
 
     // if we can build a geode robot, we immediately take credit for all geodes possible til the end of the time limit
     // but can only do this if we have some obsidan bots
-    if (current.obsBots) {
-      const timeTilBuildObs = Math.ceil(
-        (b.geoObsCost - current.obsCount) / current.obsBots
-      );
-      const timeTilBuildOre = Math.ceil(
-        (b.geoOreCost - current.oreCount) / current.oreBots
-      );
-      // have to wait til both clay and ore counts are appropriate
-      const newGeo = nextState(
-        current,
-        Math.max(timeTilBuildOre, timeTilBuildObs) + 1
-      );
-      newGeo.oreCount -= b.geoOreCost;
-      newGeo.obsCount -= b.geoObsCost;
+    if (obsidianBots) {
+      const timeTilBuildObs = Math.ceil((b.geoObsCost - obsidianCount) / obsidianBots);
+      const timeTilBuildOre = Math.ceil((b.geoOreCost - oreCount) / oreBots);
+      // have to wait til both obsidian and ore counts are appropriate
+      const newGeo = nextState(current, Math.max(timeTilBuildOre, timeTilBuildObs) + 1);
+      newGeo[ORE_COUNT] -= b.geoOreCost;
+      newGeo[OBS_COUNT] -= b.geoObsCost;
 
-      if (newGeo.turn < TIME_LIMIT) {
-        newGeo.geoCount += TIME_LIMIT - newGeo.turn;
-        // console.log(
-        //   "from ",
-        //   current,
-        //   "it would take",
-        //   newGeo.turn - current.turn,
-        //   "turns to build an geode robot",
-        //   newGeo,
-        //   "which would be active for",
-        //   TIME_LIMIT - newGeo.turn,
-        //   "turns"
-        // );
+      if (newGeo[TURN] < timeLimit) {
+        newGeo[GEO_COUNT] += timeLimit - newGeo[TURN];
         addQueue(newGeo);
       }
     }
   }
   b.maxGeode = max;
-  console.log(b.line, TIME_LIMIT, max);
 }
 
-function parse(input: string): Blueprint[] {
+function parseInput(input: string): Blueprint[] {
   return input.split("\n").map((l) => new Blueprint(l));
 }
 
 function part1(input: string): number {
-  const blueprints = parse(input);
-  blueprints.forEach((b) => calculateMaxGeode(b));
+  console.time("part1");
+  const blueprints = parseInput(input);
+  blueprints.forEach((b) => calculateMaxGeode2(b));
+  console.timeEnd("part1");
   return arrSum(blueprints.map((b) => b.qualityLevel));
 }
 
 function part2(input: string): number {
-  const blueprints = parse(input).slice(0, 3);
-  blueprints.forEach((b) => calculateMaxGeode(b, 32));
+  console.time("part2");
+  const blueprints = parseInput(input).slice(0, 3);
+  blueprints.forEach((b) => {
+    calculateMaxGeode2(b, 32);
+  });
+  console.timeEnd("part2");
   // exceeds hash set size
   return arrProd(blueprints.map((b) => b.maxGeode));
 }

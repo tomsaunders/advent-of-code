@@ -1,6 +1,17 @@
 #!/usr/bin/env ts-node
+/**
+ * Advent of Code 2022 - Day 9
+ *
+ * Summary: Simulate the movement of a head & tail node following U/D/L/R steps.
+ * Escalation: Add nodes between the head & tail
+ * Naive:  Model all moves on a grid
+ * Solution: Model the rope as a linked list
+ *
+ * Keywords: LinkedList
+ * References:
+ */
 import * as fs from "fs";
-import { arrSum, Cell, Grid, SPACE, WALL } from "./util";
+
 const input = fs.readFileSync("input9.txt", "utf8");
 const test = `R 4
 U 4
@@ -11,142 +22,105 @@ D 1
 L 5
 R 2`;
 
-function parse(input: string): Grid {
-  return Grid.fromLines(input);
-}
+const test2 = `R 5
+U 8
+L 8
+D 3
+R 17
+D 10
+L 25
+U 20`;
 
-type Dir = "R" | "L" | "U" | "D";
-type Move = [Dir, number];
-
-function part1(input: string): number {
-  const grid = new Grid();
-  const moves = input.split("\n").map((m) => {
-    const bits = m.split(" ");
-    return [bits[0], parseInt(bits[1], 10)] as Move;
-  });
-
-  let tail = grid.getCell(5, 5, 0, true) as Cell;
-  let head = grid.getCell(5, 5, 0, true) as Cell;
-  tail.visited = true;
-  head.type = "H";
-  moves.forEach(([dir, count]: Move) => {
-    for (let i = 0; i < count; i++) {
-      head.init(false, true);
-      head.type = SPACE;
-      tail.type = SPACE;
-      if (dir === "D") {
-        head = head.south as Cell;
-      } else if (dir === "L") {
-        head = head.west as Cell;
-      } else if (dir === "R") {
-        head = head.east as Cell;
-      } else if (dir === "U") {
-        head = head.north as Cell;
+class Node {
+  public next?: Node;
+  constructor(public prev?: Node, public x: number = 0, public y: number = 0) {}
+  public addNode(): Node {
+    const nu = new Node(this);
+    this.next = nu;
+    return nu;
+  }
+  public get coord(): string {
+    return `${this.x}.${this.y}`;
+  }
+  public move(dir: Dir): void {
+    if (dir === "D") {
+      this.y--;
+    } else if (dir === "L") {
+      this.x--;
+    } else if (dir === "R") {
+      this.x++;
+    } else if (dir === "U") {
+      this.y++;
+    }
+    this.next?.follow();
+  }
+  public follow(): void {
+    const dx = Math.abs(this.prev!.x - this.x);
+    const dy = Math.abs(this.prev!.y - this.y);
+    if (dx >= 2 || dy >= 2) {
+      // needs to move self
+      if (this.prev!.x > this.x) {
+        this.x++;
+      } else if (this.prev!.x < this.x) {
+        this.x--;
       }
-      head.init(false);
-      head.type = "H";
-      if (head.allNeighbours.includes(tail) || head === tail) {
-        // do nothing
-        tail.type = "T";
-      } else {
-        if (dir === "D") {
-          tail = head.north as Cell;
-        } else if (dir === "L") {
-          tail = head.east as Cell;
-        } else if (dir === "R") {
-          tail = head.west as Cell;
-        } else if (dir === "U") {
-          tail = head.south as Cell;
-        }
-        tail.type = "T";
-        tail.visited = true;
+      if (this.prev!.y > this.y) {
+        this.y++;
+      } else if (this.prev!.y < this.y) {
+        this.y--;
       }
     }
-  });
+    this.next?.follow();
+  }
+}
+type Dir = "U" | "D" | "L" | "R";
+type Move = [Dir, number];
 
-  // grid.draw();
-  return grid.cells.filter((c) => c.visited).length;
+function parseInput(input: string): Move[] {
+  const lines = input.split("\n");
+  return lines.map((line) => {
+    const [dir, count] = line.split(" ");
+    return [dir as Dir, parseInt(count)];
+  });
+}
+
+function moveCount(moves: Move[], ropeHead: Node, ropeTail: Node): number {
+  const seen = new Set<string>();
+  moves.forEach((move) => {
+    const [dir, count] = move;
+    for (let i = 0; i < count; i++) {
+      ropeHead.move(dir);
+      seen.add(ropeTail.coord);
+    }
+  });
+  return seen.size;
+}
+
+function part1(input: string): number {
+  const ropeHead = new Node();
+  const ropeTail = ropeHead.addNode();
+  return moveCount(parseInput(input), ropeHead, ropeTail);
 }
 
 function part2(input: string): number {
-  const grid = new Grid();
-  const moves = input.split("\n").map((m) => {
-    const bits = m.split(" ");
-    return [bits[0], parseInt(bits[1], 10)] as Move;
-  });
-
-  const rope: Cell[] = [];
-  for (let r = 0; r < 10; r++) {
-    rope.push(grid.getCell(10, 10, 0, true) as Cell);
+  const ropeHead = new Node();
+  let ropeTail = ropeHead;
+  for (let i = 0; i < 9; i++) {
+    ropeTail = ropeTail.addNode();
   }
-  let head = rope[0] as Cell;
-  let tail = rope[9] as Cell;
-
-  tail.visited = true;
-  moves.forEach(([dir, count]: Move) => {
-    for (let c = 0; c < count; c++) {
-      for (let i = 0; i <= 9; i++) {
-        rope[i].type = SPACE;
-      }
-      head = rope[0];
-      head.init(false, true);
-      if (dir === "D") {
-        head = head.south as Cell;
-      } else if (dir === "L") {
-        head = head.west as Cell;
-      } else if (dir === "R") {
-        head = head.east as Cell;
-      } else if (dir === "U") {
-        head = head.north as Cell;
-      }
-      rope[0] = head;
-
-      for (let i = 0; i < 9; i++) {
-        const prev = rope[i];
-        let next = rope[i + 1];
-        prev.init(false, true);
-        if (prev.allNeighbours.includes(next) || prev === next) {
-          // do nothing
-        } else {
-          if (dir === "D") {
-            next = prev.north as Cell;
-          } else if (dir === "L") {
-            next = prev.east as Cell;
-          } else if (dir === "R") {
-            next = prev.west as Cell;
-          } else if (dir === "U") {
-            next = prev.south as Cell;
-          }
-          rope[i + 1] = next;
-        }
-      }
-      for (let i = 0; i <= 9; i++) {
-        rope[i].type = `${i}`;
-      }
-      tail = rope[9];
-      tail.visited = true;
-      console.log("visited", tail.coord);
-      grid.draw();
-    }
-  });
-
-  // grid.draw();
-  return grid.cells.filter((c) => c.visited).length;
+  return moveCount(parseInput(input), ropeHead, ropeTail);
 }
 
-console.log("part1");
-console.log(part1(test));
-console.log(part1(input));
-console.log("part2");
-console.log(part2(test));
-// console.log(
-//   part2(`R 5
-// U 8
-// L 8
-// D 3
-// R 17
-// D 10
-// L 25
-// U 20`)
-// );
-// console.log(part2(input));
+const t = part1(test);
+if (t == 13) {
+  console.log("part 1 answer", part1(input));
+  const t2a = part2(test);
+  const t2b = part2(test2);
+  if (t2a === 1 && t2b == 36) {
+    console.log("part 2 answer", part2(input));
+  } else {
+    console.log("part 2 test fail", t2a, t2b);
+  }
+} else {
+  console.log("part 1 test fail", t);
+}

@@ -1,5 +1,4 @@
 export { Grid } from "./grid";
-import { Cell } from "./cell";
 export { Cell } from "./cell";
 
 export const WALL: string = "#";
@@ -15,10 +14,7 @@ export const WHITE: string = "\x1b[37m";
 export const RESET: string = "\x1b[0m";
 
 export function test(a: any, b: any): void {
-  const o =
-    a == b
-      ? `${GREEN}Test pass = ${a}${RESET}`
-      : `${RED}!!Test fail got ${b} wanted ${a}${RESET}`;
+  const o = a == b ? `${GREEN}Test pass = ${a}${RESET}` : `${RED}!!Test fail got ${b} wanted ${a}${RESET}`;
   console.log(o);
 }
 
@@ -48,4 +44,16 @@ export function getStringGroups(input: string): string[][] {
   }
 
   return groups;
+}
+
+// https://stackoverflow.com/a/3154503
+export function lcm(arr: number[]): number {
+  return arr.reduce((acc, n) => (acc * n) / gcd(acc, n));
+}
+
+export function gcd(a: number, b: number): number {
+  if (b === 0) {
+    return a;
+  }
+  return gcd(b, a % b);
 }

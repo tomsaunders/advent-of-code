@@ -27,13 +27,13 @@ export class Grid {
     this.cells.forEach((c) => c.reset());
   }
 
-  public createCell(x: number, y: number, z: number, type: string, cellCreator?: CellCreator): Cell | undefined {
+  public createCell(x: number, y: number, z: number, type: string, cellCreator?: CellCreator): Cell {
     const c = cellCreator ? cellCreator(this, x, y, z, type) : new Cell(this, x, y, z, type);
 
     return this.addCell(c);
   }
 
-  public addCell(c: Cell): Cell | undefined {
+  public addCell(c: Cell): Cell {
     this.lookup.set(c.coord, c);
     this.minY = Math.min(this.minY, c.y);
     this.minX = Math.min(this.minX, c.x);
@@ -65,6 +65,7 @@ export class Grid {
   public draw(z: number = 0, drawCoords: boolean = true): void {
     const YELLOW: string = "\x1b[33m";
     const RESET: string = "\x1b[0m";
+    const yPad = Math.max(this.maxY, Math.abs(this.minY)).toString().length;
 
     if (drawCoords) {
       // draw two rows for the x headers
@@ -72,7 +73,8 @@ export class Grid {
       // and print the last digit on the second
       // 0         1         2
       // 0123456789012345678901234
-      let xRow = `${YELLOW}   `;
+      const spacer = "".padStart(yPad + 1, " ");
+      let xRow = `${YELLOW}${spacer}`;
       for (let x = this.minX; x <= this.maxX; x++) {
         // when the x coordinate goes into triple digits,
         // the header will be in double digits,
@@ -82,7 +84,7 @@ export class Grid {
       }
       xRow = `${xRow}${RESET}`;
       console.log(xRow);
-      xRow = `${YELLOW}   `;
+      xRow = `${YELLOW}${spacer}`;
       for (let x = this.minX; x <= this.maxX; x++) {
         xRow += Math.abs(x) % 10;
       }
@@ -90,7 +92,6 @@ export class Grid {
       console.log(xRow);
     }
 
-    const yPad = Math.max(this.maxY, Math.abs(this.minY)).toString().length;
     for (let y = this.minY; y <= this.maxY; y++) {
       // if drawing coordinates, pad the y value according to the maximum number size
       // before then drawing the rest of the row
