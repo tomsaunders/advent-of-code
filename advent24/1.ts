@@ -1,6 +1,18 @@
 #!/usr/bin/env ts-node
+/**
+ * Advent of Code 2024 - Day 1
+ *
+ * Summary: Two columns of numbers, find the sum of the differences between the numbers in each row
+ * Escalation: Add a second part where the sum is the product of the number of times a number appears in the right column
+ * Naive:  N/A
+ * Solution:
+ *  1.  Parse the input into two arrays, iterate through them, and sum the differences
+ *  2.  n^2 iteration to count the number of times a number appears in the right column
+ *
+ * Keywords: simple math, array iteration
+ * References: N/A
+ */
 import * as fs from "fs";
-import { arrSum } from "./util";
 const input = fs.readFileSync("input1.txt", "utf8");
 const test = `3   4
 4   3
@@ -28,7 +40,7 @@ function part1(input: string): number {
 
   return leftCol.reduce(
     (sum, left, i) => sum + Math.abs(rightCol[i] - left),
-    0
+    0,
   );
 }
 
