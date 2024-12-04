@@ -1,11 +1,23 @@
 import { Grid } from "./grid";
 import { RED, RESET, WHITE, WALL, SPACE, GREEN, ON, OFF, Direction } from ".";
 
-export type CellCreator = (grid: Grid, x: number, y: number, z: number, type: string) => Cell;
+export type CellCreator = (
+  grid: Grid,
+  x: number,
+  y: number,
+  z: number,
+  type: string,
+) => Cell;
 
 export class Cell {
   public reference?: string;
-  constructor(public grid: Grid, public x: number, public y: number, public z: number, public type: string) {}
+  constructor(
+    public grid: Grid,
+    public x: number,
+    public y: number,
+    public z: number,
+    public type: string,
+  ) {}
 
   public visited = false;
   public tentativeDist = 9999;
@@ -32,7 +44,12 @@ export class Cell {
     this.east = this.getEast(createNeighbours);
     this.west = this.getWest(createNeighbours);
 
-    this.directNeighbours = [this.north, this.south, this.east, this.west].filter((c) => !!c) as Cell[];
+    this.directNeighbours = [
+      this.north,
+      this.south,
+      this.east,
+      this.west,
+    ].filter((c) => !!c) as Cell[];
 
     this.diagonalNeighbours = [
       this.getNorthWest(createNeighbours),
@@ -94,7 +111,9 @@ export class Cell {
   }
 
   public get kdInfo(): string {
-    const kd = this.knownDistances.map((v: [Cell, number]) => `${v[1]} to ${v[0].coord}`).join("\n\t");
+    const kd = this.knownDistances
+      .map((v: [Cell, number]) => `${v[1]} to ${v[0].coord}`)
+      .join("\n\t");
     return `${this.label} knows distances = \n\t${kd}`;
   }
 
@@ -128,7 +147,12 @@ export class Cell {
   }
 
   public get onBorder(): boolean {
-    return this.x == this.grid.maxX || this.x == this.grid.minX || this.y == this.grid.minY || this.y == this.grid.maxY;
+    return (
+      this.x == this.grid.maxX ||
+      this.x == this.grid.minX ||
+      this.y == this.grid.minY ||
+      this.y == this.grid.maxY
+    );
   }
 
   public get isOn(): boolean {
@@ -160,7 +184,14 @@ export class Cell {
     return new Cell(grid, this.x, this.y, this.z, this.type);
   }
 
-  public getDirection(direction: Direction, createNeighbours = false): Cell | undefined {
+  public getCell(dx: number, dy: number): Cell | undefined {
+    return this.grid.getCell(this.x + dx, this.y + dy);
+  }
+
+  public getDirection(
+    direction: Direction,
+    createNeighbours = false,
+  ): Cell | undefined {
     if (direction == "North" || direction === "n") {
       return this.grid.getCell(this.x, this.y - 1, this.z, createNeighbours);
     } else if (direction == "South" || direction === "s") {
