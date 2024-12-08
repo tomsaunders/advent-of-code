@@ -1,5 +1,5 @@
 {
-  "name": "advent23",
+  "name": "advent24",
   "version": "1.0.0",
   "description": "advent of code",
   "main": "index.js",
@@ -10,12 +10,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^20.14.8",
-    "ts-node": "^10.4.0",
-    "typescript": "^3.9.7",
-    "vite": "^5.3.6"
-  },
-  "dependencies": {
-    "three": "^0.166.0"
+    "@types/node": "^20.17.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
   }
 }
