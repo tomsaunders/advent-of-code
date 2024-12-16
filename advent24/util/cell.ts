@@ -242,4 +242,8 @@ export class Cell {
   public getDown(createNeighbours = false): Cell | undefined {
     return this.grid.getCell(this.x, this.y, this.z - 1, createNeighbours);
   }
+
+  public getDistance(otherCell: Cell): number {
+    return Math.abs(this.x - otherCell.x) + Math.abs(this.y - otherCell.y);
+  }
 }
