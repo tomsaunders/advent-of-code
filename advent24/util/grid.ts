@@ -27,8 +27,16 @@ export class Grid {
     this.cells.forEach((c) => c.reset());
   }
 
-  public createCell(x: number, y: number, z: number, type: string, cellCreator?: CellCreator): Cell {
-    const c = cellCreator ? cellCreator(this, x, y, z, type) : new Cell(this, x, y, z, type);
+  public createCell(
+    x: number,
+    y: number,
+    z: number,
+    type: string,
+    cellCreator?: CellCreator
+  ): Cell {
+    const c = cellCreator
+      ? cellCreator(this, x, y, z, type)
+      : new Cell(this, x, y, z, type);
 
     return this.addCell(c);
   }
@@ -115,7 +123,10 @@ export class Grid {
     }
   }
 
-  public breadthFirst(from: Cell, getOpenNeighbours?: (c: Cell) => Cell[]): void {
+  public breadthFirst(
+    from: Cell,
+    getOpenNeighbours?: (c: Cell) => Cell[]
+  ): void {
     if (!getOpenNeighbours) {
       getOpenNeighbours = (c: Cell) => c.openNeighbours;
     }
@@ -135,7 +146,11 @@ export class Grid {
     }
   }
 
-  public shortestPath(from: Cell, to: Cell, getOpenNeighbours?: (c: Cell) => Cell[]): number {
+  public shortestPath(
+    from: Cell,
+    to: Cell,
+    getOpenNeighbours?: (c: Cell) => Cell[]
+  ): number {
     if (!getOpenNeighbours) {
       getOpenNeighbours = (c: Cell) => c.openNeighbours;
     }
@@ -205,7 +220,10 @@ export class Grid {
     return [];
   }
 
-  public static fromLines(input: string | string[], cellCreator?: CellCreator): Grid {
+  public static fromLines(
+    input: string | string[],
+    cellCreator?: CellCreator
+  ): Grid {
     const lines = Array.isArray(input) ? input : input.split("\n");
 
     const g = new Grid();
@@ -236,5 +254,9 @@ export class Grid {
         this.getCell(x, y)?.init();
       }
     }
+  }
+
+  public findByType(type: string): Cell | undefined {
+    return this.cells.find((c) => c.type === type);
   }
 }

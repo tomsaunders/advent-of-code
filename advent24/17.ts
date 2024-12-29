@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 /**
- * Advent of Code 2024 - Day x
+ * Advent of Code 2024 - Day 17
  *
  * Summary:
  * Escalation:
@@ -62,113 +62,87 @@ enum Op {
   CDV,
 }
 
+const mod = (n: number, m: number) => ((n % m) + m) % m;
 function executeProgram(
   a: number,
   b: number,
   c: number,
-  instructions: string,
+  instructions: string
 ): string {
   const program = instructions.split(",").map(mapNum);
 
-  function combo(op: number): number {
-    // stolen from reddit, very nice
-    return [0, 1, 2, 3, a, b, c, 9999][op];
-  }
-
   let ptr = 0;
-  let out: string[] = [];
-  while (ptr < program.length - 1) {
-    const instruction = program[ptr];
+  const output: number[] = [];
+  while (program[ptr] !== undefined && output.length < 30) {
+    const code = program[ptr];
     const operand = program[ptr + 1];
-    const comboOperand = combo(operand);
-    const adv = Math.floor(a / Math.pow(2, comboOperand));
+    // array access stolen from reddit, very nice
+    const combo = [0, 1, 2, 3, a, b, c, 9999][operand];
+    const adv = Math.floor(a / Math.pow(2, combo));
 
-    if (instruction === Op.ADV) {
+    if (code === Op.ADV) {
       a = adv;
-    } else if (instruction === Op.BXL) {
-      b ^= operand;
-    } else if (instruction === Op.BST) {
-      b = comboOperand % 8;
-    } else if (instruction === Op.JNZ) {
+    } else if (code === Op.BXL) {
+      b = (b ^ operand) >>> 0; //js xor unsigned
+    } else if (code === Op.BST) {
+      b = mod(combo, 8);
+    } else if (code === Op.JNZ) {
       if (a !== 0) {
-        ptr = operand - 2; // offset usual jump
+        ptr = operand - 2; // offset usual jump with -2
       }
-    } else if (instruction === Op.BXC) {
-      b = b ^ c;
-    } else if (instruction === Op.OUT) {
-      const v = comboOperand % 8;
-      out.push(v.toString());
-    } else if (instruction === Op.BDV) {
+    } else if (code === Op.BXC) {
+      b = (b ^ c) >>> 0;
+    } else if (code === Op.OUT) {
+      output.push(mod(combo, 8));
+    } else if (code === Op.BDV) {
       b = adv;
-    } else if (instruction === Op.CDV) {
+    } else if (code === Op.CDV) {
       c = adv;
     }
 
     ptr += 2;
   }
-  return out.join(",");
+  return output.join(",");
 }
 
-function part2(input: string, start = 0, inc = 1): number {
+type Queue = {
+  progress: number;
+  digit: number;
+};
+
+function part2(input: string): number {
   const { registers, program } = parseInput(input);
   let [a, b, c] = registers;
 
-  const bits = program.split(",").map(mapNum);
-  const reverse = bits.slice(0).reverse();
+  const goalDigits = program.split(",").map(mapNum);
+  const maxDigit = goalDigits.length;
 
-  console.log("seeking output of ", bits);
-  console.log("reverse is ", reverse);
+  const answers: number[] = [];
+  const queue: Queue[] = [{ progress: 0, digit: 0 }];
+  while (queue.length) {
+    const { progress, digit } = queue.shift()!;
 
-  let found = 0;
-  let ans = 0;
-  // while (found < bits.length){
-  for (let i = 0; i < 8; i++) {
-    a = ans + i;
-    let o = executeProgram(a, b, c, program);
-    let oBits = o.split(",").map(mapNum).reverse();
-    if (oBits[found] === reverse[found]) {
-      console.log("got ", o, "from a", a);
-      const jSeek = bits.slice(-2).join(",");
+    if (digit === maxDigit) {
+      // console.log("Found something!", progress);
+      answers.push(progress);
+      continue;
+    }
 
-      for (let j = 0; j < 8; j++) {
-        let aa = a << (3 + j);
-        o = executeProgram(aa, b, c, program);
-        if (o === jSeek) {
-          oBits = o.split(",").map(mapNum).reverse();
-          console.log("got ", o, "from a", aa, "wanted", jSeek);
-          const kSeek = bits.slice(-3).join(",");
+    const seek = goalDigits.slice(-(digit + 1)).join(",");
 
-          for (let k = 0; k < 8; k++) {
-            let aaa = aa << (3 + k);
-            o = executeProgram(aaa, b, c, program);
-            if (o === kSeek) {
-              oBits = o.split(",").map(mapNum).reverse();
-              console.log("got ", o, "from a", aaa, "wanted", kSeek);
-            }
-          }
-        }
+    // move on to the next octal digit by adding 3 empty bits
+    // reddit said progress <<< 0 should work but it stopped at higher number sizes for meee
+    const progressShift = parseInt(progress.toString(2) + "000", 2);
+    for (let i = 0; i < 8; i++) {
+      const x = progressShift + i;
+      const output = executeProgram(x, b, c, program);
+      if (output === seek) {
+        queue.push({ progress: x, digit: digit + 1 });
       }
     }
   }
-  // }
 
-  // a = 0;
-  // let o = executeProgram(a, b, c, program);
-  // while (o.length <= program.length) {
-  //   a++;
-  //   o = executeProgram(a, b, c, program);
-  //   if (o === program) {
-  //     console.log(
-  //       a,
-  //       "is an answer",
-  //       a.toString(8),
-  //       parseInt(a.toString(8)).toString(2),
-  //       o,
-  //     );
-  //   }
-  // }
-
-  return a;
+  return Math.min(...answers);
 }
 
 const t = part1(test);
@@ -179,8 +153,7 @@ if (t == "4,6,3,5,6,3,5,2,1,0") {
 }
 const t2 = part2(test2);
 if (t2 == 117440) {
-  // console.log("part 2 answer", part2(input, 72000215712, 1752033));
+  console.log("part 2 answer", part2(input));
 } else {
   console.log("part 2 test fail", t2);
 }
-// didnt find 0 - 7198590000
