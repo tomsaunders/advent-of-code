@@ -2,10 +2,10 @@
 /**
  * Advent of Code 2025 - Day 1
  *
- * Summary:
- * Escalation:
+ * Summary: Parse input into a series of forward and back directions, counting number of times the end position was in a certain state.
+ * Escalation: Count number of times a partial move hit the state.
  * Naive:  N/A
- * Solution:
+ * Solution: Move by n spaces and check for part 1, move by 1 but do it n times for part 2.
  *
  * Keywords:
  * References: N/A
