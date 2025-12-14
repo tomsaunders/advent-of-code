@@ -13,7 +13,7 @@
  * References: N/A
  */
 import * as fs from "fs";
-import { arrProd, arrSum, Cell, Grid } from "./util";
+import { arrProd, arrSum, Cell, Grid, mapNum } from "./util";
 const input = fs.readFileSync("input6.txt", "utf8");
 const test = `123 328  51 64 
  45 64  387 23 
@@ -27,25 +27,44 @@ type Problem = {
 };
 
 function parseInput(input: string): Problem[] {
-  const lines = input.split("\n").map((line) => {
-    return line.split(" ").filter((x) => !!x);
-  });
+  const lines = input.split("\n");
   const o = lines.length - 1;
-  const count = lines[o].length;
   const problems: Problem[] = [];
-  for (let n = 0; n < count; n++) {
-    const problem: Problem = {
-      nums: [],
-      strings: [],
-      operation: lines[o][n] as "+" | "*",
-    };
-    for (let l = 0; l < o; l++) {
-      problem.strings.push(lines[l][n]);
-      problem.nums.push(parseInt(lines[l][n]));
-    }
-    problems.push(problem);
-  }
+  const magicMap = new Array(o).fill(0).map((v, i) => i);
 
+  const operationLine = lines[o].split("");
+  let colStart = 0;
+  let operation: "+" | "*" = operationLine[0] as any;
+  for (let i = 0; i < operationLine.length; i++) {
+    const c = operationLine[i];
+    if (c === "+" || c === "*") {
+      // this is an operation, lets make problems
+      if (i - colStart > 0) {
+        const strings = magicMap.map((l) =>
+          lines[l].substring(colStart, i - 1),
+        );
+
+        const problem: Problem = {
+          nums: strings.map(mapNum),
+          strings,
+          operation,
+        };
+        problems.push(problem);
+        operation = c;
+      }
+
+      colStart = i;
+    }
+  }
+  // handle the last number
+  const strings = magicMap.map((l) => lines[l].substring(colStart));
+
+  const problem: Problem = {
+    nums: strings.map(mapNum),
+    strings,
+    operation,
+  };
+  problems.push(problem);
   return problems;
 }
 
@@ -64,15 +83,13 @@ function part1(input: string): number {
 }
 
 function getNums(problem: Problem): number[] {
-  const longest = Math.max(...problem.strings.map((s) => s.length));
   const nums: string[] = [];
-  for (let i = 0; i < longest; i++) {
+  for (let i = 0; i < problem.strings[0].length; i++) {
     let num = "";
-    for (let n = 0; n < problem.strings.length; n++) {
-      if (problem.strings[n][i] !== undefined) {
-        num += problem.strings[n][i];
-      }
+    for (let s = 0; s < problem.strings.length; s++) {
+      num += problem.strings[s][i];
     }
+    nums.push(num);
   }
   return nums.map((n) => parseInt(n));
 }
@@ -82,7 +99,6 @@ function part2(input: string): number {
   return arrSum(
     problems.map((problem) => {
       const nums = getNums(problem);
-      console.log("get nums", problem, nums);
       if (problem.operation === "+") {
         return arrSum(nums);
       } else if (problem.operation === "*") {

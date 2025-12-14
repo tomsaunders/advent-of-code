@@ -7,7 +7,7 @@
  * Naive:  N/A
  * Solution:
  *  1.
- *  2.
+ *  2. Unify overlapping ranges
  *
  * Keywords: grid, word search
  * References: N/A
@@ -59,10 +59,6 @@ function part1(input: string): number {
   }).length;
 }
 
-type RangeNum = {
-  dir: "F" | "T";
-  num: number;
-};
 function part2(input: string): number {
   const d = parseInput(input);
   const s = new Set<number>();
@@ -75,39 +71,32 @@ function part2(input: string): number {
     oldCount = oldRanges.length;
     ranges = [];
     for (let r = 0; r < oldRanges.length; r++) {
-      let [from, to, u] = oldRanges[r];
+      let [A1, A2, u] = oldRanges[r];
       if (u) continue;
       for (let n = r + 1; n < oldRanges.length; n++) {
-        const [fromN, toN, used] = oldRanges[n];
-        console.log("comparing", [from, to], "and", [fromN, toN]);
+        const [B1, B2, used] = oldRanges[n];
         if (used) continue;
-        if (fromN < from && toN > to) {
-          // 10-30 overtakes 15-20 to become 10-30
-          from = fromN;
-          to = toN;
+        console.log("comparing", [A1, A2], "and", [B1, B2]);
+        if (A1 <= B1 && A2 >= B2) {
+          // A fully encloses B. Drop B.
           oldRanges[n][2] = true;
-        } else if (fromN > from && fromN < to && toN > to) {
-          // 12-20 overtakes 10-14 to become 10-20
-          to = toN;
+        } else if (B1 <= A1 && B2 >= A2) {
+          // B fully encloses A. Make A B. Drop B.
+          A1 = B1;
+          A2 = B2;
           oldRanges[n][2] = true;
-        } else if (fromN < from && toN > fromN && toN > to) {
-          // 10-14 overtakes 12-20 to become 10-20
-          from = fromN;
+        } else if (A1 <= B1 && A2 >= B1 && A2 <= B2) {
+          // overlap, increase A by the B end
+          A2 = B2;
           oldRanges[n][2] = true;
-          // } else if (fromN < from && to > from) {
-          //   // 10-14 overtakes 12-16 to become 10-16
-          //   from = fromN;
-          //   console.log("from is now", fromN);
-          //   oldRanges[n][2] = true;
-          // } else if (toN > to && from > fromN) {
-          //   to = toN;
-          //   console.log("to is now", toN);
-          //   oldRanges[n][2] = true;
+        } else if (B1 <= A1 && A1 <= B2 && A2 >= B2) {
+          // overlap, increase A by the B start
+          A1 = B1;
+          oldRanges[n][2] = true;
         }
       }
-      ranges.push([from, to, false]);
+      ranges.push([A1, A2, false]);
     }
-    console.log(ranges);
     oldRanges = ranges.slice(0);
   }
 
