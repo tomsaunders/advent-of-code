@@ -13,7 +13,7 @@
  * References: N/A
  */
 import * as fs from "fs";
-import { Cell, Grid, SPACE } from "./util";
+import { arrSum, Cell, Grid, SPACE } from "./util";
 const input = fs.readFileSync("input7.txt", "utf8");
 const test = `.......S.......
 ...............
@@ -55,64 +55,41 @@ function part1(input: string): number {
       if (next.east) beams.push(next.east);
     }
   }
-  g.draw();
   return splits;
 }
-
-type Link = {
-  from: Cell;
-  to: Cell | "end";
-  dead?: boolean;
-};
 
 function part2(input: string): number {
   const g = parseInput(input);
   const start = g.cells.find((c) => c.type === "S")!;
-  const paths = [{ from: start, at: start }];
-  const links: Link[] = [];
-  while (paths.length) {
-    const { from, at } = paths.shift()!;
-    const next = at.south;
+  g.cells.forEach((c) => {
+    c.cost = 0;
+  });
+  start.cost = 1;
+  const beams = [start];
+  while (beams.length) {
+    const beamCell = beams.shift()!;
+    const next = beamCell.south;
     if (next?.type === SPACE) {
       next.type = BEAM;
-      paths.push({ from, at: next });
+      next.cost += beamCell.cost;
+      beams.push(next);
     } else if (next?.type === SPLITTER) {
-      links.push({ from, to: next });
-      if (next.west) paths.push({ from: next, at: next.west });
-      if (next.east) paths.push({ from: next, at: next.east });
-    } else if (!next) {
-      links.push({ from, to: "end" });
+      if (next.west) {
+        next.west.cost += beamCell.cost;
+        beams.push(next.west);
+      }
+      if (next.east) {
+        next.east.cost += beamCell.cost;
+        beams.push(next.east);
+      }
     }
   }
-
-  let answer = 0;
-  while (links.length) {
-    console.log(links.length);
-    const step = links.shift();
-    if (step?.dead) continue;
-    if (step?.to === "end") {
-      console.log(step.from.coord, "to end");
-      answer++;
-      continue;
+  g.cells.forEach((c) => {
+    if (c.cost) {
+      c.type = c.cost.toString();
     }
-
-    // from is start, to is something
-    const fromTo = links.filter((l) => l.from === step?.to);
-    fromTo.forEach((l) => {
-      l.dead = true;
-      links.unshift({ from: step!.from, to: l.to });
-      console.log(
-        typeof l.from === "string" ? "end" : l.from.coord || "end",
-        "becomes",
-        step!.from.coord,
-        "to",
-        typeof l.to === "string" ? "end" : l.to.coord || "end",
-      );
-    });
-    step!.dead = true;
-  }
-
-  return answer;
+  });
+  return arrSum(g.cells.filter((c) => c.y === g.maxY).map((c) => c.cost));
 }
 
 const t = part1(test);

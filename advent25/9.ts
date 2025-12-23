@@ -24,8 +24,10 @@ const test = `7,1
 2,3
 7,3`;
 
-function parseInput(input: string): number[][] {
-  return input.split("\n").map((l) => l.split(",").map(mapNum));
+type Point = [number, number];
+
+function parseInput(input: string): Point[] {
+  return input.split("\n").map((l) => l.split(",").map(mapNum)) as Point[];
 }
 
 function part1(input: string): number {
@@ -43,14 +45,78 @@ function part1(input: string): number {
   return maxArea;
 }
 
+type Area = {
+  from: Point;
+  to: Point;
+  area: number;
+};
+
+type Line = {
+  from: Point;
+  to: Point;
+  length: number;
+};
+
 function part2(input: string): number {
   const points = parseInput(input);
-  const g = new Grid();
-  for (const [x, y] of points) {
-    g.addCell(new Cell(g, x, y, 0, "#"));
+  const areas: Area[] = [];
+
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const from = points[i];
+      const to = points[j];
+      const [x, y] = from;
+      const [ex, why] = to;
+      const w = Math.abs(ex - x) + 1;
+      const h = Math.abs(why - y) + 1;
+      if (w > 1 && h > 1) {
+        const area = w * h;
+        areas.push({
+          from,
+          to,
+          area,
+        });
+      }
+    }
   }
-  g.draw();
-  return 0;
+
+  areas.sort((a, b) => b.area - a.area);
+  // first item has the biggest potential area
+
+  const greenLines: Line[] = [];
+  const l = points.length;
+  points.push(points[0]);
+  for (let i = 0; i < l; i++) {
+    const from = points[i];
+    const to = points[i + 1];
+    const [x, y] = from;
+    const [ex, why] = to;
+    const length = (Math.abs(why - y) + 1) * (Math.abs(ex - x) + 1);
+    greenLines.push({ from, to, length });
+  }
+
+  greenLines.sort((a, b) => b.length - a.length);
+
+  const biggest = areas.find((area) => {
+    // find if there are any green lines through this area.
+    const maxX = Math.max(area.from[0], area.to[0]);
+    const minX = Math.min(area.from[0], area.to[0]);
+    const maxY = Math.max(area.from[1], area.to[1]);
+    const minY = Math.min(area.from[1], area.to[1]);
+
+    console.log("comparing ", area);
+    const intersect = greenLines.find((line) => {
+      const maxLX = Math.max(line.from[0], line.to[0]);
+      const minLX = Math.min(line.from[0], line.to[0]);
+      const maxLY = Math.max(line.from[1], line.to[1]);
+      const minLY = Math.min(line.from[1], line.to[1]);
+      return minLX < maxX && minLY < maxY && maxLX > minX && maxLY > minY;
+    });
+    if (intersect) return false;
+    return true;
+  });
+
+  return biggest?.area || 0;
 }
 
 const t = part1(test);
